@@ -30,8 +30,11 @@ as `reply`. The `/api/qc` endpoint is a 404 outside `npm run dev`, so none of th
 Mimic (screenshot to editable block, `/mimic`) is behind a flag: only `VITE_MIMIC_ENABLED=true` turns it on (the
 server functions answer "Not found" otherwise, so production shows "Coming soon"). It needs `ANTHROPIC_API_KEY`,
 is for signed-in visitors and limited by `MIMIC_PER_DAY` (default 3, rolling 24 hours, in `mimic_runs`). `MIMIC_MODEL`
-overrides the model (default `claude-sonnet-5-5`). Locally `MIMIC_MOCK=true` returns a stand-in block without calling
-the model. The model's HTML is rebuilt from an allow-list in `src/lib/mimic-html.ts` before it is drawn.
+overrides the default model (`claude-sonnet-5-5`); each Mimic node can pick any model in `src/lib/mimic-models.ts`.
+Free OpenRouter models (`:free`) need `OPENROUTER_API_KEY`; they skip the daily limit and are not logged in `mimic_runs`.
+Emails in `MIMIC_PASS_EMAILS` (comma separated, verified in production) are a free pass: no daily limit on Mimic.
+Locally `MIMIC_MOCK=true` returns a stand-in block without calling the model. The model's HTML is rebuilt from an
+allow-list in `src/lib/mimic-html.ts` before it is drawn.
 Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).
 
 ## Notes

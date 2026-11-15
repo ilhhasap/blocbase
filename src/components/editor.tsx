@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { groupOf, type Block } from "@/data/blocks";
 import { BlockView } from "@/components/block-view";
+import { CodeHover } from "@/components/code-menu";
+import { FigmaMark } from "@/components/figma-mark";
 import { kitIn } from "@/components/shadow-host";
 import { QcLayer } from "@/components/qc";
 import { isGenerated } from "@/lib/generated";
@@ -407,6 +409,7 @@ export function Editor({
   onClose,
   onSave,
   onCopy,
+  onNotify,
   onShare,
 }: {
   block: Block;
@@ -416,6 +419,7 @@ export function Editor({
   onClose: () => void;
   onSave: () => void;
   onCopy: (kit: HTMLElement | null) => void;
+  onNotify?: (message: string) => void;
   onShare: () => void;
 }) {
   // Blocks Mimic builds use any colour, so their dark preview maps every shade, not a fixed palette.
@@ -631,6 +635,11 @@ export function Editor({
             <BlockView key={rev} id={block.id} />
           </div>
           <QcLayer blockId={block.id} blockName={block.name} where="editor" />
+          <CodeHover
+            onNotify={onNotify}
+            name={block.name}
+            source={() => kitIn(frameRef.current)?.outerHTML ?? null}
+          />
           {tune &&
           baseRef.current &&
           JSON.stringify(tune) !== JSON.stringify(baseRef.current) ? (
@@ -801,6 +810,7 @@ export function Editor({
                 onCopy(kit instanceof HTMLElement ? kit : null);
               }}
             >
+              <FigmaMark />
               {busy ? "Copying" : copied ? "Copied" : "Copy to Figma"}
             </button>
           </div>
