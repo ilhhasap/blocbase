@@ -4,14 +4,19 @@ import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, type Block, type Category, t
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { releaseCopy, reserveCopy } from "@/lib/copy-gate";
+import { blockPopularity } from "@/lib/popularity";
+import { isSortMode, needsCounts, sortBlocks, type Popularity, type SortMode } from "@/lib/sort-blocks";
 import { FREE_COPIES } from "@/lib/copy-limit";
 import { listSavedBlocks, mergeSavedBlocks, setSavedBlock } from "@/lib/saved";
 import { recordCopyEvent, recordCopyFailureEvent } from "@/lib/stats";
 import { BlockView } from "@/components/block-view";
+import { CodeMenu } from "@/components/code-menu";
+import { SortMenu } from "@/components/sort-menu";
 import { Editor } from "@/components/editor";
 import { AuthModal } from "@/components/auth-modal";
 import { Footer } from "@/components/footer";
-import { MimicPage } from "@/components/mimic";
+import { FigmaMark } from "@/components/figma-mark";
+import { MIMIC_ENABLED, MimicPage } from "@/components/mimic";
 import { QcLayer, QcToggle } from "@/components/qc";
 import { hostOf, isControlEvent, kitIn } from "@/components/shadow-host";
 
@@ -19,6 +24,8 @@ const LOCAL_SAVED = "block-supply-saved";
 const TOAST_TEXT: Record<string, string> = {
   "Couldn’t copy": "Couldn’t copy",
   "Link copied": "Link copied",
+  "HTML copied": "HTML copied",
+  "React copied": "React copied",
   "Log in": "Log in to keep copying",
   Saved: "Saved to your list",
   "Welcome back": "You’re in. Copy it again",
@@ -41,19 +48,6 @@ function Logo({ size = 32 }: { size?: number }) {
   );
 }
 
-/** The Figma mark in its own five colours. */
-function FigmaMark() {
-  return (
-    <svg width="8" height="12" viewBox="0 0 38 57" aria-hidden="true">
-      <path fill="#1ABCFE" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0Z" />
-      <path fill="#0ACF83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0Z" />
-      <path fill="#FF7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19Z" />
-      <path fill="#F24E1E" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5Z" />
-      <path fill="#A259FF" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5Z" />
-    </svg>
-  );
-}
-
 function columnsFor(width: number) {
   if (width < 740) return 1;
   if (width < 1100) return 2;
@@ -72,27 +66,47 @@ function pack(items: Block[], n: number) {
   return cols;
 }
 
+/** An opaque colour so close to white that the converter treats it as no fill. */
+function nearWhite(color: string) {
+  const match = /rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)(?:\s*[,/]\s*([\d.]+))?\s*\)/.exec(color);
+  if (!match) return false;
+  const alpha = match[4] === undefined ? 1 : Number(match[4]);
+  return alpha >= 0.95 && Math.min(Number(match[1]), Number(match[2]), Number(match[3])) >= 245;
+}
+
 /** The block as Figma clipboard HTML. Throws when it cannot be built. */
 async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   const { generateFromElement, inlineComputedStyles } = await import("@magicpatterns/html-to-figma");
   // A block shown scaled down is copied at its real size.
-  const fit = (hostOf(kit) ?? kit).closest<HTMLElement>("[data-fit-inner]");
-  const scaleBefore = fit?.style.transform ?? "";
-  if (fit) fit.style.transform = "none";
+  // The Mimic canvas zooms its whole world; measuring through that scale would shrink every box but not its text.
+  const scaled: Array<[HTMLElement, string]> = [];
+  for (let node: Element | null = hostOf(kit) ?? kit; node; node = node.parentElement) {
+    if (node instanceof HTMLElement && node.matches("[data-fit-inner], .mimic-world")) {
+      scaled.push([node, node.style.transform]);
+      node.style.transform = "none";
+    }
+  }
   // The converter gives a frame with no fill an opaque white one, which shows up in Figma as a
   // white box behind blocks that only have shadows. An almost-invisible fill keeps it clear.
   const bgBefore = kit.style.backgroundColor;
+  const rootFill = getComputedStyle(kit).backgroundColor;
   const clearRoot = /^(transparent|rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\))$/.test(getComputedStyle(kit).backgroundColor);
-  if (clearRoot) kit.style.backgroundColor = "rgba(255, 255, 255, 0.004)";
+  if (clearRoot) kit.style.backgroundColor = block.id.startsWith("mimic-") ? "#ffffff" : "rgba(255, 255, 255, 0.004)";
   let inlined: string;
   try {
     inlined = inlineComputedStyles(kit);
   } finally {
-    if (fit) fit.style.transform = scaleBefore;
+    for (const [node, before] of scaled) node.style.transform = before;
     if (clearRoot) kit.style.backgroundColor = bgBefore;
   }
   const clone = new DOMParser().parseFromString(inlined, "text/html").body.firstElementChild;
   if (!clone) throw new Error("empty frame");
+  // The converter drops a solid white (or nearly white) fill on the outer frame, so the pasted frame
+  // is see-through. A white-to-white gradient survives and looks the same.
+  if (block.id.startsWith("mimic-") && clone instanceof HTMLElement && (clearRoot || nearWhite(rootFill))) {
+    // Appended as text: going through `style` would merge the longhands the converter reads.
+    clone.setAttribute("style", `${clone.getAttribute("style") ?? ""};background-image:linear-gradient(#ffffff, #ffffff)`);
+  }
   return generateFromElement(clone, { topLayerName: block.name });
 }
 
@@ -122,6 +136,8 @@ export function Site() {
   // Pages that are not a block library: no group tab is active on them.
   const ownPage = page === "pricing" || page === "mimic";
   const [cat, setCat] = useState<Category | null>(null);
+  const [sort, setSort] = useState<SortMode>("featured");
+  const [counts, setCounts] = useState<Popularity | null>(null);
   const [cols, setCols] = useState(3);
   const [saved, setSaved] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
@@ -232,9 +248,40 @@ export function Site() {
     return () => window.clearTimeout(id);
   }, [toast]);
 
+  // The sort the visitor chose last time, kept in this browser.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("supply-sort");
+      if (isSortMode(stored)) setSort(stored);
+    } catch {
+      /* storage can be blocked */
+    }
+  }, []);
+
+  function chooseSort(next: SortMode) {
+    setSort(next);
+    try {
+      localStorage.setItem("supply-sort", next);
+    } catch {
+      /* storage can be blocked */
+    }
+  }
+
+  // Copy and save counts are only fetched when a sort needs them.
+  useEffect(() => {
+    if (!needsCounts(sort) || counts) return;
+    let cancelled = false;
+    blockPopularity()
+      .then((next) => !cancelled && setCounts(next))
+      .catch(() => !cancelled && setCounts({}));
+    return () => {
+      cancelled = true;
+    };
+  }, [sort, counts]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return BLOCKS.filter((block) => {
+    return sortBlocks(BLOCKS, sort, counts).filter((block) => {
       // A search looks through everything; otherwise only the chosen group.
       if (!q && groupOf(block.cat) !== group) return false;
       if (cat && block.cat !== cat) return false;
@@ -246,7 +293,7 @@ export function Site() {
         block.id.includes(q)
       );
     });
-  }, [query, group, cat, onlySaved, saved]);
+  }, [query, group, cat, onlySaved, saved, sort, counts]);
 
   // Sections are wide layouts, so they get at most two columns; a search mixes groups and keeps the usual grid.
   // Nothing left to show in Saved (the last one was unsaved): go back to browsing everything.
@@ -476,11 +523,11 @@ export function Site() {
           idleTimer.current = window.setTimeout(() => setNavHidden(false), 220);
         }}
       >
-        <div className="body">
+        <div className={page === "mimic" ? "body body-canvas" : "body"}>
           {page === "pricing" ? (
             <FreePage onBrowse={goLibrary} signedIn={Boolean(currentUser)} onSignup={() => setAuth({ mode: "signup" })} />
           ) : page === "mimic" ? (
-            <MimicPage signedIn={Boolean(currentUser)} onLogin={() => setAuth({ mode: "login" })} onCopy={(block, kit) => void onCopy(block, kit)} busy={busy} copied={copied} />
+            <MimicPage signedIn={Boolean(currentUser)} userId={currentUser?.id ?? null} pending={authPending} onLogin={() => setAuth({ mode: "login" })} onCopy={(block, kit) => void onCopy(block, kit)} onNotify={setToast} busy={busy} copied={copied} />
           ) : (
             <>
               <header className="hero">
@@ -502,6 +549,7 @@ export function Site() {
                 </button>
               </header>
 
+              <div className="bar-wrap">
               <div className="bar" role="toolbar" aria-label="Filter by kind">
                 {GROUP_CATEGORIES[group].map((name) => (
                   <button
@@ -531,6 +579,8 @@ export function Site() {
                     Saved ({saved.length})
                   </button>
                 ) : null}
+              </div>
+              <SortMenu value={sort} onChange={chooseSort} />
               </div>
 
               {filtered.length === 0 ? (
@@ -590,20 +640,28 @@ export function Site() {
                           </div>
                           <QcLayer blockId={block.id} blockName={block.name} where="card" />
                           <span className="cname">{block.name}</span>
-                          <button
-                            type="button"
-                            className="copy"
-                            data-on={copied === block.id ? "true" : "false"}
-                            aria-label={`Copy ${block.name} to Figma`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              const kit = kitIn(event.currentTarget.closest("article"));
-                              void onCopy(block, kit instanceof HTMLElement ? kit : null);
-                            }}
-                          >
-                            <FigmaMark />
-                            {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
-                          </button>
+                          <div className="card-actions">
+                            <button
+                              type="button"
+                              className="copy"
+                              data-on={copied === block.id ? "true" : "false"}
+                              aria-label={`Copy ${block.name} to Figma`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const kit = kitIn(event.currentTarget.closest("article"));
+                                void onCopy(block, kit instanceof HTMLElement ? kit : null);
+                              }}
+                            >
+                              <FigmaMark />
+                              {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
+                            </button>
+                            <CodeMenu
+                              variant="card"
+                              onNotify={setToast}
+                              name={block.name}
+                              source={() => kitIn(document.getElementById(`block-${block.id}`))?.outerHTML ?? null}
+                            />
+                          </div>
                         </article>
                       ))}
                     </div>
@@ -615,7 +673,7 @@ export function Site() {
             </>
           )}
         </div>
-        <Footer />
+        {page === "mimic" ? null : <Footer />}
       </div>
 
       {editingBlock ? (
@@ -630,6 +688,7 @@ export function Site() {
           }
           onSave={() => requestSave(editingBlock.id)}
           onCopy={(kit) => void onCopy(editingBlock, kit)}
+          onNotify={setToast}
           onShare={() => void onShare(editingBlock)}
         />
       ) : null}
@@ -747,6 +806,12 @@ function Questions() {
           Not for your first {FREE_COPIES} copies. After that, log in with your email to keep copying. It
           stays free: there is no paid plan.
         </dd>
+        <dt>What is Mimic?</dt>
+        <dd>
+          {MIMIC_ENABLED
+            ? "Upload a screenshot of one component and Mimic rebuilds it as an editable block you can tune and paste into Figma as auto layout. It is free with an account, with a few rebuilds a day."
+            : "Upload a screenshot of one component and get it back as an editable block you can paste into Figma. It is coming soon, and it will be free with an account."}
+        </dd>
         <dt>Will the text stay editable?</dt>
         <dd>
           Yes. Every label is a Geist text layer, not outlines, inside an auto-layout frame.
@@ -805,6 +870,7 @@ function FreePage({ onBrowse, signedIn, onSignup }: { onBrowse: () => void; sign
             <li>Unlimited copies with a free account</li>
             <li>{FREE_COPIES} copies without an account</li>
             <li>Save blocks to your account</li>
+            <li>{MIMIC_ENABLED ? "Mimic: turn a screenshot into a block, a few a day" : "Mimic, screenshot to block (coming soon)"}</li>
           </ul>
         </article>
         <article className="plan">

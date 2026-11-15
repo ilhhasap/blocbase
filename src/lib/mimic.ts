@@ -13,7 +13,19 @@ export const mimicStatus = createServerFn({ method: "GET" })
 /** Turn a screenshot into a block. Signed-in only, and limited per day. */
 export const mimicGenerate = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { image: string; mime: string; hint: string }) => data)
+  .validator(
+    (data: {
+      image?: string;
+      mime?: string;
+      hint: string;
+      width?: number;
+      height?: number;
+      model?: string;
+      html?: string;
+      render?: string;
+      instruction?: string;
+    }) => data,
+  )
   .handler(async ({ context, data }): Promise<MimicResult> => {
     const mimic = await import("@/lib/mimic.server");
     return mimic.generateMimic(context.userId, data);
