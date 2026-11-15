@@ -33,6 +33,10 @@ is for signed-in visitors and limited by `MIMIC_PER_DAY` (default 3, rolling 24 
 overrides the default model (`claude-sonnet-5-5`); each Mimic node can pick any model in `src/lib/mimic-models.ts`.
 Free OpenRouter models (`:free`) need `OPENROUTER_API_KEY`; they skip the daily limit and are not logged in `mimic_runs`.
 Emails in `MIMIC_PASS_EMAILS` (comma separated, verified in production) are a free pass: no daily limit on Mimic.
+To turn Mimic on in production: set `VITE_MIMIC_ENABLED=true` (read at build time, so redeploy) and
+`ANTHROPIC_API_KEY` (optionally `OPENROUTER_API_KEY`) in the Vercel project. `vite.config.ts` gives the function the
+plan's maximum duration (a rebuild takes tens of seconds), and the client keeps the screenshot plus any render under
+Vercel's 4.5 MB request limit, so keep those two numbers in `src/components/mimic.tsx` and `mimic.server.ts` in step.
 Locally `MIMIC_MOCK=true` returns a stand-in block without calling the model. The model's HTML is rebuilt from an
 allow-list in `src/lib/mimic-html.ts` before it is drawn.
 Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).

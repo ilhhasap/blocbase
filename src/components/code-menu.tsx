@@ -98,7 +98,7 @@ export function CodeMenu({
   /** Shows a message in the page's toast; without it the button shows the message itself. */
   onNotify?: (message: string) => void;
   /** pill: small outlined action; card: glass pill on a block card. */
-  variant: "pill" | "card";
+  variant: "pill";
 }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -138,13 +138,6 @@ export function CodeMenu({
     }
   }
 
-  const button =
-    variant === "pill"
-      ? "mimic-link"
-      : variant === "card"
-        ? "copy code-btn"
-        : "bench-code";
-
   return (
     <div
       className={`code-menu code-menu-${variant}`}
@@ -159,31 +152,14 @@ export function CodeMenu({
     >
       <button
         type="button"
-        className={button}
+        className="mimic-link"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Copy ${name} as code`}
         onClick={() => setOpen((on) => !on)}
       >
-        {variant === "card" ? (
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="m5.5 4.5-3.5 3.5 3.5 3.5M10.5 4.5 14 8l-3.5 3.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : null}
         {note ?? "Code"}
-        {variant === "card" ? null : (
+        {
           <svg
             width="12"
             height="12"
@@ -199,7 +175,7 @@ export function CodeMenu({
               strokeLinejoin="round"
             />
           </svg>
-        )}
+        }
       </button>
       {open ? (
         <CodeList

@@ -18,7 +18,9 @@ export const mimicEnabled = () => process.env.VITE_MIMIC_ENABLED === "true";
 const DEFAULT_MODEL = process.env.MIMIC_MODEL || DEFAULT_MIMIC_MODEL;
 const PER_DAY = Math.max(1, Number(process.env.MIMIC_PER_DAY) || 3);
 const MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
-const MAX_BASE64 = 4_200_000; // about 3 MB of image
+// Vercel refuses a request body over 4.5 MB, and a refine sends the screenshot and a render together.
+const MAX_BASE64 = 2_600_000; // about 1.9 MB of image
+const MAX_RENDER = 1_600_000;
 const MAX_HTML = 60_000;
 
 export type MimicStatus = {
@@ -135,7 +137,9 @@ export async function generateMimic(
       throw new Error("Send a PNG, JPEG, WebP or GIF image.");
     }
     if (image.length > MAX_BASE64)
-      throw new Error("That image is too large. Use one under 3 MB.");
+      throw new Error(
+        "That image is too large. Crop it to just the component.",
+      );
   } else if (!edit) {
     throw new Error("Send a PNG, JPEG, WebP or GIF image.");
   }
@@ -167,7 +171,7 @@ export async function generateMimic(
   const render =
     typeof input.render === "string" &&
     /^[A-Za-z0-9+/=]+$/.test(input.render) &&
-    input.render.length <= MAX_BASE64
+    input.render.length <= MAX_RENDER
       ? input.render
       : "";
 
