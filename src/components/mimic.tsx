@@ -1896,7 +1896,8 @@ function MimicTool({
   function build(flow: Flow) {
     if (flow.runs.some((run) => run.working) || flow.runs.length >= MAX_RUNS)
       return;
-    const run: Run = { ...blankRun(), working: true };
+    // generate() marks it as working itself; starting it as working made generate() return at once.
+    const run: Run = blankRun();
     const image = pos[`img-${flow.id}`] ?? { x: 0, y: 0 };
     const last = flow.runs[flow.runs.length - 1];
     const lastSpot = last ? pos[`out-${last.id}`] : undefined;
