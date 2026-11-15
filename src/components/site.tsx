@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, type Block, type Category, type Group } from "@/data/blocks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -73,8 +74,66 @@ function nearWhite(color: string) {
   return alpha >= 0.95 && Math.min(Number(match[1]), Number(match[2]), Number(match[3])) >= 245;
 }
 
+/**
+ * A live text field draws its placeholder as a separate, absolutely placed span next to an empty editable
+ * one. The converter puts such a span far outside the field. Fold the placeholder into the editable span
+ * (in the placeholder's colour) so it pastes as ordinary text inside the field.
+ */
+function foldPlaceholders(root: Element) {
+  for (const edit of Array.from(root.querySelectorAll<HTMLElement>("[contenteditable]"))) {
+    const next = edit.nextElementSibling;
+    if (edit.textContent || !(next instanceof HTMLElement)) continue;
+    const style = next.getAttribute("style") ?? "";
+    if (!/position:\s*absolute/.test(style)) continue;
+    edit.textContent = next.textContent ?? "";
+    const color = /(?:^|;)\s*color:\s*([^;]+)/.exec(style)?.[1];
+    if (color) edit.setAttribute("style", `${edit.getAttribute("style") ?? ""};color:${color}`);
+    next.remove();
+  }
+}
+
+/**
+ * Draws the block the way the editor panel does (same frame, same sizing) in a hidden spot, so a copy from a
+ * homepage card pastes at exactly the size the panel gives, not at the size of the card preview.
+ */
+async function mountLikeEditor(id: string): Promise<{ kit: HTMLElement | null; dispose: () => void }> {
+  const host = document.createElement("div");
+  host.className = "bench-frame";
+  host.setAttribute("aria-hidden", "true");
+  host.style.cssText = "position:fixed;top:0;left:-10000px;pointer-events:none";
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  root.render(<BlockView id={id} />);
+  let kit: HTMLElement | null = null;
+  for (let waited = 0; waited < 2000 && !kit; waited += 30) {
+    await new Promise((resolve) => window.setTimeout(resolve, 30));
+    const found = kitIn(host);
+    if (found && found.offsetWidth > 0) kit = found;
+  }
+  // Let the block settle (fonts, the fit-to-frame measurement) before it is read.
+  if (kit) await new Promise((resolve) => window.setTimeout(resolve, 150));
+  return {
+    kit,
+    dispose: () => {
+      root.unmount();
+      host.remove();
+    },
+  };
+}
+
 /** The block as Figma clipboard HTML. Throws when it cannot be built. */
 async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
+  const inEditor = Boolean(hostOf(kit)?.closest(".bench-frame"));
+  if (inEditor || block.id.startsWith("mimic-")) return convertKit(block, kit);
+  const copy = await mountLikeEditor(block.id);
+  try {
+    return await convertKit(block, copy.kit ?? kit);
+  } finally {
+    copy.dispose();
+  }
+}
+
+async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
   const { generateFromElement, inlineComputedStyles } = await import("@magicpatterns/html-to-figma");
   // A block shown scaled down is copied at its real size.
   // The Mimic canvas zooms its whole world; measuring through that scale would shrink every box but not its text.
@@ -100,6 +159,7 @@ async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   }
   const clone = new DOMParser().parseFromString(inlined, "text/html").body.firstElementChild;
   if (!clone) throw new Error("empty frame");
+  foldPlaceholders(clone);
   // The converter drops a solid white (or nearly white) fill on the outer frame, so the pasted frame
   // is see-through. A white-to-white gradient survives and looks the same.
   // Every block with a white card (forms, pricing, dialogs) needs it; a Mimic block with no fill gets one too.
