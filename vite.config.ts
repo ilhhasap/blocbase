@@ -106,7 +106,12 @@ export default defineConfig(({ command, isPreview }) => ({
     tanstackStart(),
     ...(command === "build" || isPreview
       ? [
-          nitro({ preset: "vercel", routeRules: { "/**": { headers: securityHeaders } } }),
+          nitro({
+            preset: "vercel",
+            // Mimic asks a model to rebuild a screenshot, which takes far longer than the default limit.
+            vercel: { functions: { maxDuration: "max" } },
+            routeRules: { "/**": { headers: securityHeaders } },
+          }),
         ]
       : []),
     viteReact(),

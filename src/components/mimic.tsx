@@ -198,10 +198,11 @@ async function prepare(file: File): Promise<Prepared> {
   small.getContext("2d")?.drawImage(canvas, 0, 0, small.width, small.height);
   const thumb = small.toDataURL("image/jpeg", 0.7);
 
-  for (const quality of [0.92, 0.82, 0.7]) {
+  // Kept small: the whole request, screenshot and any render of the block, must stay under Vercel's 4.5 MB.
+  for (const quality of [0.92, 0.82, 0.7, 0.55, 0.4]) {
     const url = canvas.toDataURL("image/jpeg", quality);
     const image = url.slice(url.indexOf(",") + 1);
-    if (image.length < 4_000_000) {
+    if (image.length < 2_500_000) {
       return {
         image,
         mime: "image/jpeg",
@@ -562,6 +563,38 @@ function ModelMenu({
         </ul>
       ) : null}
     </div>
+  );
+}
+
+const WORKING_STEPS = [
+  "Reading the screenshot",
+  "Measuring the spacing",
+  "Matching colors and fonts",
+  "Building the layout",
+  "Almost there",
+];
+
+/** What shows while a block is being made: a line that moves on every couple of seconds, so it feels like progress. */
+function Working() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setStep((n) => Math.min(n + 1, WORKING_STEPS.length - 1)),
+      2400,
+    );
+    return () => window.clearInterval(timer);
+  }, []);
+  return (
+    <span className="mimic-working" role="status">
+      <span key={step} className="mimic-working-text">
+        {WORKING_STEPS[step]}
+      </span>
+      <span className="mimic-dots" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+    </span>
   );
 }
 
@@ -1641,6 +1674,8 @@ function MimicTool({
               kit.offsetWidth,
               kit.offsetHeight,
             ).catch(() => undefined);
+            // Too big to send along: the refine still works from the screenshot and the HTML.
+            if (render && render.length > 1_500_000) render = undefined;
           }
         }
       }
@@ -2094,7 +2129,7 @@ function MimicTool({
                           data-working={run.working ? "true" : "false"}
                         >
                           {run.working ? (
-                            "Rebuilding…"
+                            <Working />
                           ) : (
                             <>
                               <span>
