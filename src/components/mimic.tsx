@@ -598,6 +598,47 @@ function Working() {
   );
 }
 
+const PROMPT_TIPS = [
+  "What is it? e.g. pricing card",
+  "Ask for changes: make it blue",
+  "Only the modal in the middle",
+  "Add notes: dark mode, no icons",
+];
+
+/** The notes field under an image. Its hint line changes every few seconds to show what can be asked for. */
+function PromptField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const [tip, setTip] = useState(0);
+  useEffect(() => {
+    if (value) return;
+    const timer = window.setInterval(
+      () => setTip((n) => (n + 1) % PROMPT_TIPS.length),
+      3200,
+    );
+    return () => window.clearInterval(timer);
+  }, [value]);
+  return (
+    <span className="mimic-prompt-field">
+      <input
+        value={value}
+        maxLength={200}
+        aria-label="Notes for the clone: what it is, or what to change"
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {value ? null : (
+        <span key={tip} className="mimic-prompt-tip" aria-hidden="true">
+          {PROMPT_TIPS[tip]}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function PlayIcon() {
   return (
     <svg
@@ -1979,18 +2020,27 @@ function MimicTool({
                       </div>
                       <form
                         className="mimic-float mimic-prompt"
-                        onSubmit={(event) => event.preventDefault()}
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          if (!flow.hint.trim()) return;
+                          if (!signedIn) onLogin();
+                          else if (canBuild) build(flow);
+                        }}
                       >
-                        <input
+                        <PromptField
                           value={flow.hint}
-                          maxLength={200}
-                          placeholder="What is it? e.g. pricing card"
-                          aria-label="What the component is"
-                          onChange={(event) =>
-                            patchFlow(flow.id, { hint: event.target.value })
-                          }
+                          onChange={(hint) => patchFlow(flow.id, { hint })}
                         />
-                        <button type="submit" aria-label="Send" disabled>
+                        <button
+                          type="submit"
+                          aria-label="Clone with these notes"
+                          disabled={
+                            !flow.hint.trim() || (signedIn && !canBuild)
+                          }
+                          title={
+                            flow.hint.trim() ? buildTitle : "Type a note first"
+                          }
+                        >
                           <SendIcon />
                         </button>
                       </form>

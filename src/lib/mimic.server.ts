@@ -179,7 +179,7 @@ export async function generateMimic(
     ? `${hint ? `What it is: ${hint}. ` : ""}Apply this change and keep everything else exactly as it is: ${instruction}.${size}\n\nCurrent HTML:\n${current}`
     : current
       ? `${hint ? `What it is: ${hint}. ` : ""}Correct this rebuild so it matches the screenshot.${size}${render ? " The second image is how the current HTML renders." : ""}\n\nCurrent HTML:\n${current}`
-      : `${hint ? `Rebuild this component. What it is: ${hint}` : "Rebuild this component."}${size}`;
+      : `${hint ? `Rebuild this component. The user's notes (what it is, and anything to change from the screenshot, such as colours or what to leave out): ${hint}` : "Rebuild this component."}${size}`;
 
   // Free models cost nothing, so they skip the daily limit and are not logged as runs.
   if (provider === "openrouter") {
