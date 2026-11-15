@@ -838,36 +838,48 @@ function Questions() {
     <section className="questions" id="questions">
       <h2>Questions</h2>
       <dl>
-        <dt>What do I get?</dt>
-        <dd>
-          Every block on this page, as a Figma frame. Paste it and the stack, padding, and gap
-          are already auto layout. Labels stay Geist text, so you can retype them.
-        </dd>
-        <dt>How do I paste into Figma?</dt>
-        <dd>
-          Press Copy Figma on a card. In Figma, select the canvas and press Cmd V or Ctrl V. The
-          frame is auto layout. Nested rows and columns stay editable.
-        </dd>
-        <dt>What can I use the blocks for?</dt>
-        <dd>
-          Anything you make: apps, sites, decks, and client work. No credit required. Don’t
-          resell the set unchanged as a kit of your own.
-        </dd>
-        <dt>Do I need to sign in?</dt>
-        <dd>
-          Not for your first {FREE_COPIES} copies. After that, log in with your email to keep copying. It
-          stays free: there is no paid plan.
-        </dd>
-        <dt>What is Mimic?</dt>
-        <dd>
-          {MIMIC_ENABLED
-            ? "Upload a screenshot of one component and Mimic rebuilds it as an editable block you can tune and paste into Figma as auto layout. It is free with an account, with a few rebuilds a day."
-            : "Upload a screenshot of one component and get it back as an editable block you can paste into Figma. It is coming soon, and it will be free with an account."}
-        </dd>
-        <dt>Will the text stay editable?</dt>
-        <dd>
-          Yes. Every label is a Geist text layer, not outlines, inside an auto-layout frame.
-        </dd>
+        <div className="qa">
+          <dt>What do I get?</dt>
+          <dd>
+            Every block on this page, as a Figma frame. Paste it and the stack, padding, and gap
+            are already auto layout. Labels stay Geist text, so you can retype them.
+          </dd>
+        </div>
+        <div className="qa">
+          <dt>How do I paste into Figma?</dt>
+          <dd>
+            Press Copy Figma on a card. In Figma, select the canvas and press Cmd V or Ctrl V. The
+            frame is auto layout. Nested rows and columns stay editable.
+          </dd>
+        </div>
+        <div className="qa">
+          <dt>What can I use the blocks for?</dt>
+          <dd>
+            Anything you make: apps, sites, decks, and client work. No credit required. Don’t
+            resell the set unchanged as a kit of your own.
+          </dd>
+        </div>
+        <div className="qa">
+          <dt>Do I need to sign in?</dt>
+          <dd>
+            Not for your first {FREE_COPIES} copies. After that, log in with your email to keep copying. It
+            stays free: there is no paid plan.
+          </dd>
+        </div>
+        <div className="qa">
+          <dt>What is Mimic?</dt>
+          <dd>
+            {MIMIC_ENABLED
+              ? "Upload a screenshot of one component and Mimic rebuilds it as an editable block you can tune and paste into Figma as auto layout. It is free with an account, with a few rebuilds a day."
+              : "Upload a screenshot of one component and get it back as an editable block you can paste into Figma. It is coming soon, and it will be free with an account."}
+          </dd>
+        </div>
+        <div className="qa">
+          <dt>Will the text stay editable?</dt>
+          <dd>
+            Yes. Every label is a Geist text layer, not outlines, inside an auto-layout frame.
+          </dd>
+        </div>
       </dl>
     </section>
   );
