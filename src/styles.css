@@ -4756,10 +4756,11 @@ button.free-ghost {
   padding: 0 7px 0 5px;
   overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(120deg, #7c5cff, #e65cb8 55%, #ff8a4c);
+  background: linear-gradient(180deg, #34353a, #0c0d0f);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
-    0 4px 10px rgba(124, 92, 255, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 10px rgba(23, 24, 26, 0.3);
   color: #fff;
   font: 700 10px/1 var(--font-sans);
   letter-spacing: 0.05em;
