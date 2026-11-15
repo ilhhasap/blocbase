@@ -574,26 +574,42 @@ const WORKING_STEPS = [
   "Almost there",
 ];
 
-/** What shows while a block is being made: a line that moves on every couple of seconds, so it feels like progress. */
-function Working() {
-  const [step, setStep] = useState(0);
+/**
+ * What shows while a block is being made: a line that moves on every couple of seconds, so it feels like progress.
+ * A detailed image can take a minute or more, so after a while it says so honestly, shows how long it has been,
+ * and offers to stop waiting.
+ */
+function Working({ onCancel }: { onCancel: () => void }) {
+  const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    const timer = window.setInterval(
-      () => setStep((n) => Math.min(n + 1, WORKING_STEPS.length - 1)),
-      2400,
-    );
+    const timer = window.setInterval(() => setSeconds((n) => n + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const slow = seconds >= 20;
+  const step = Math.min(Math.floor(seconds / 2.4), WORKING_STEPS.length - 1);
+  const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   return (
-    <span className="mimic-working" role="status">
-      <span key={step} className="mimic-working-text">
-        {WORKING_STEPS[step]}
+    <span className="mimic-working-wrap">
+      <span className="mimic-working" role="status">
+        <span key={slow ? "slow" : step} className="mimic-working-text">
+          {slow ? "Detailed images take longer" : WORKING_STEPS[step]}
+        </span>
+        <span className="mimic-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
       </span>
-      <span className="mimic-dots" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
+      {seconds >= 6 ? (
+        <span className="mimic-wait">
+          <span className="mimic-clock">{clock}</span>
+          {slow ? (
+            <button type="button" className="mimic-link" onClick={onCancel}>
+              Stop waiting
+            </button>
+          ) : null}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -1720,19 +1736,34 @@ function MimicTool({
           }
         }
       }
-      const out = await mimicGenerate({
-        data: {
-          image: shot?.image,
-          mime: shot?.mime,
-          hint: flow.hint,
-          width: shot?.width,
-          height: shot?.height,
-          model,
-          html,
-          render,
-          instruction: mode === "edit" ? run.instruction : undefined,
-        },
-      });
+      // Never wait forever: if nothing has come back after this long, say so instead of spinning.
+      let giveUp: number | undefined;
+      const out = await Promise.race([
+        mimicGenerate({
+          data: {
+            image: shot?.image,
+            mime: shot?.mime,
+            hint: flow.hint,
+            width: shot?.width,
+            height: shot?.height,
+            model,
+            html,
+            render,
+            instruction: mode === "edit" ? run.instruction : undefined,
+          },
+        }),
+        new Promise<never>((_, reject) => {
+          giveUp = window.setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "That took too long. Try a simpler crop, or a faster model like Sonnet.",
+                ),
+              ),
+            240_000,
+          );
+        }),
+      ]).finally(() => window.clearTimeout(giveUp));
       const next = sanitizeBlockHtml(out.html);
       if (!next) throw new Error("The result could not be drawn. Try again.");
       const id = `mimic-${uid()}`;
@@ -2179,7 +2210,9 @@ function MimicTool({
                           data-working={run.working ? "true" : "false"}
                         >
                           {run.working ? (
-                            <Working />
+                            <Working
+                              onCancel={() => removeNodes([`out-${run.id}`])}
+                            />
                           ) : (
                             <>
                               <span>

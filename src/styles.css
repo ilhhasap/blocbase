@@ -4704,3 +4704,23 @@ button.free-ghost {
     animation: mm-step 0.4s var(--mm-ease) backwards;
   }
 }
+
+/* Working node: a clock and a way out when it takes long */
+.mimic-working-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.mimic-wait {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-ink-4);
+  font-size: 12.5px;
+}
+
+.mimic-clock {
+  font-variant-numeric: tabular-nums;
+}

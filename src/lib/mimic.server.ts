@@ -241,66 +241,69 @@ export async function generateMimic(
       };
     }
 
-    const response = await anthropic().beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      // A safety decline is retried on another model inside the same call.
-      fallbacks: "default",
-      system: [
-        {
-          type: "text",
-          text: MIMIC_SYSTEM,
-          cache_control: { type: "ephemeral" },
-        },
-        ...(edit
-          ? [{ type: "text", text: MIMIC_EDIT }]
-          : current
-            ? [{ type: "text", text: MIMIC_REFINE }]
-            : []),
-      ],
-      output_config: {
-        effort: "medium",
-        format: { type: "json_schema", schema: MIMIC_SCHEMA },
-      },
-      messages: [
-        {
-          role: "user",
-          content: [
-            ...(image
-              ? [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: mime as "image/png",
-                      data: image,
-                    },
-                  },
-                ]
+    const response = await anthropic().beta.messages.create(
+      {
+        model: MODEL,
+        max_tokens: 16000,
+        betas: ["server-side-fallback-2026-07-01"],
+        // A safety decline is retried on another model inside the same call.
+        fallbacks: "default",
+        system: [
+          {
+            type: "text",
+            text: MIMIC_SYSTEM,
+            cache_control: { type: "ephemeral" },
+          },
+          ...(edit
+            ? [{ type: "text", text: MIMIC_EDIT }]
+            : current
+              ? [{ type: "text", text: MIMIC_REFINE }]
               : []),
-            ...(current && !edit && render
-              ? [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: render,
-                    },
-                  },
-                ]
-              : []),
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
+        ],
+        output_config: {
+          effort: "medium",
+          format: { type: "json_schema", schema: MIMIC_SCHEMA },
         },
-      ],
-    } as Parameters<
-      ReturnType<typeof anthropic>["beta"]["messages"]["create"]
-    >[0]);
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...(image
+                ? [
+                    {
+                      type: "image",
+                      source: {
+                        type: "base64",
+                        media_type: mime as "image/png",
+                        data: image,
+                      },
+                    },
+                  ]
+                : []),
+              ...(current && !edit && render
+                ? [
+                    {
+                      type: "image",
+                      source: {
+                        type: "base64",
+                        media_type: "image/png",
+                        data: render,
+                      },
+                    },
+                  ]
+                : []),
+              {
+                type: "text",
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      } as Parameters<
+        ReturnType<typeof anthropic>["beta"]["messages"]["create"]
+      >[0],
+      { timeout: 230_000, maxRetries: 0 },
+    );
 
     if (!("content" in response)) throw new Error("No answer came back.");
     const usage = {
