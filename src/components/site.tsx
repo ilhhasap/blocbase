@@ -73,6 +73,27 @@ function nearWhite(color: string) {
   return alpha >= 0.95 && Math.min(Number(match[1]), Number(match[2]), Number(match[3])) >= 245;
 }
 
+/** Width the editor shows a block that fills its container (its frame is 360px, or the block's own minimum). */
+const editorWidth = (block: Block) => Math.max(360, block.minW ?? 0);
+
+/**
+ * A live text field draws its placeholder as a separate, absolutely placed span next to an empty editable
+ * one. The converter puts such a span far outside the field. Fold the placeholder into the editable span
+ * (in the placeholder's colour) so it pastes as ordinary text inside the field.
+ */
+function foldPlaceholders(root: Element) {
+  for (const edit of Array.from(root.querySelectorAll<HTMLElement>("[contenteditable]"))) {
+    const next = edit.nextElementSibling;
+    if (edit.textContent || !(next instanceof HTMLElement)) continue;
+    const style = next.getAttribute("style") ?? "";
+    if (!/position:\s*absolute/.test(style)) continue;
+    edit.textContent = next.textContent ?? "";
+    const color = /(?:^|;)\s*color:\s*([^;]+)/.exec(style)?.[1];
+    if (color) edit.setAttribute("style", `${edit.getAttribute("style") ?? ""};color:${color}`);
+    next.remove();
+  }
+}
+
 /** The block as Figma clipboard HTML. Throws when it cannot be built. */
 async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   const { generateFromElement, inlineComputedStyles } = await import("@magicpatterns/html-to-figma");
@@ -91,15 +112,22 @@ async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   const rootFill = getComputedStyle(kit).backgroundColor;
   const clearRoot = /^(transparent|rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\))$/.test(getComputedStyle(kit).backgroundColor);
   if (clearRoot) kit.style.backgroundColor = block.id.startsWith("mimic-") ? "#ffffff" : "rgba(255, 255, 255, 0.004)";
+  // A block that fills its container is copied at the width the editor shows it, wherever it is copied from,
+  // so the card on the homepage and the editor give the same frame.
+  const widthBefore = kit.style.width;
+  const fitWidth = kit.style.width === "100%" && !block.id.startsWith("mimic-") && !hostOf(kit)?.closest(".bench-frame");
+  if (fitWidth) kit.style.width = `${editorWidth(block)}px`;
   let inlined: string;
   try {
     inlined = inlineComputedStyles(kit);
   } finally {
     for (const [node, before] of scaled) node.style.transform = before;
     if (clearRoot) kit.style.backgroundColor = bgBefore;
+    if (fitWidth) kit.style.width = widthBefore;
   }
   const clone = new DOMParser().parseFromString(inlined, "text/html").body.firstElementChild;
   if (!clone) throw new Error("empty frame");
+  foldPlaceholders(clone);
   // The converter drops a solid white (or nearly white) fill on the outer frame, so the pasted frame
   // is see-through. A white-to-white gradient survives and looks the same.
   // Every block with a white card (forms, pricing, dialogs) needs it; a Mimic block with no fill gets one too.
