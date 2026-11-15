@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, type Block, type Category, type Group } from "@/data/blocks";
@@ -461,6 +461,23 @@ export function Site() {
     window.setTimeout(() => setCopied((curr) => (curr === block.id ? null : curr)), 1600);
   }
 
+  // The pill behind the active tab slides to the new tab instead of jumping.
+  const tabsRef = useRef<HTMLElement>(null);
+  const [tabPill, setTabPill] = useState<{ x: number; w: number } | null>(null);
+  const tabKey = `${page}|${ownPage}|${group}`;
+  useLayoutEffect(() => {
+    const nav = tabsRef.current;
+    if (!nav) return;
+    const place = () => {
+      const on = nav.querySelector<HTMLElement>('[data-on="true"]');
+      setTabPill(on ? { x: on.offsetLeft, w: on.offsetWidth } : null);
+    };
+    place();
+    window.addEventListener("resize", place);
+    void document.fonts?.ready.then(place);
+    return () => window.removeEventListener("resize", place);
+  }, [tabKey]);
+
   const editingBlock = BLOCKS.find((block) => block.id === editing) ?? null;
 
   async function onShare(block: Block) {
@@ -489,7 +506,13 @@ export function Site() {
           >
             <Logo />
           </Link>
-          <nav className="groups" aria-label="Browse by group">
+          <nav className="groups" aria-label="Browse by group" ref={tabsRef}>
+            <span
+              className="tab-pill"
+              aria-hidden="true"
+              data-ready={tabPill ? "true" : "false"}
+              style={tabPill ? { transform: `translateX(${tabPill.x}px)`, width: tabPill.w } : undefined}
+            />
             {GROUPS.map((name) => (
               <Link
                 key={name}
