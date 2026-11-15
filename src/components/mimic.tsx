@@ -566,6 +566,22 @@ function ModelMenu({
   );
 }
 
+type Snapshot = { flows: Flow[]; pos: Record<string, Point> };
+
+/** What counts as a change worth undoing: which rows and blocks exist, their model and where they sit. */
+const snapshotKey = (flows: Flow[], pos: Record<string, Point>) =>
+  JSON.stringify([
+    flows.map((flow) => [
+      flow.id,
+      flow.model ?? "",
+      flow.runs.map((run) => [run.id, run.result?.id ?? ""]),
+    ]),
+    pos,
+  ]);
+
+const isBusy = (flows: Flow[]) =>
+  flows.some((flow) => flow.runs.some((run) => run.working || run.refining));
+
 const WORKING_STEPS = [
   "Reading the screenshot",
   "Measuring the spacing",
@@ -912,6 +928,7 @@ function MimicTool({
     focus: (_ids: string[], _mode: "fit" | "reveal" | "center") => {},
     remove: (_ids: string[]) => {},
     nudge: (_ids: string[], _dx: number, _dy: number) => {},
+    history: (_direction: "undo" | "redo") => {},
   });
   selectedRef.current = selected;
   openRef.current = openId;
@@ -926,17 +943,88 @@ function MimicTool({
   const sizesRef = useRef(sizes);
   posRef.current = pos;
   flowsRef.current = flows;
+  /** Undo and redo: snapshots of the board (rows, blocks, positions) taken after each settled change. */
+  /** True while a node is being dragged: a drag is one undo step, recorded when it ends. */
+  const dragging = useRef(false);
+  const history = useRef<{
+    past: Snapshot[];
+    future: Snapshot[];
+    present: Snapshot;
+    key: string;
+  } | null>(null);
   sizesRef.current = sizes;
   /** The shrunk screenshot of each board row, kept in memory so a Mimic node can run again. */
   const prepared = useRef(new Map<string, Promise<Prepared>>());
 
-  // The canvas belongs to the account: signed out there is none, and another account never sees it.
   const storeKey = userId ? `${STORE_KEY}:${userId}` : null;
+  /** Record the board as one undo step when it differs from the last one. */
+  function commitHistory() {
+    const f = flowsRef.current;
+    const p = posRef.current;
+    if (isBusy(f)) return;
+    const key = snapshotKey(f, p);
+    const h = history.current;
+    if (!h) {
+      history.current = {
+        past: [],
+        future: [],
+        present: { flows: f, pos: p },
+        key,
+      };
+      return;
+    }
+    if (key === h.key) {
+      // Only things that are not undone (a hint, a thumbnail): keep the latest copy.
+      h.present = { flows: f, pos: p };
+      return;
+    }
+    h.past.push(h.present);
+    if (h.past.length > 100) h.past.shift();
+    h.future = [];
+    h.present = { flows: f, pos: p };
+    h.key = key;
+  }
+
+  function stepHistory(direction: "undo" | "redo") {
+    // Not while a block is being made: it would be dropped from under the running request.
+    if (isBusy(flowsRef.current)) return;
+    commitHistory();
+    const h = history.current;
+    if (!h) return;
+    const from = direction === "undo" ? h.past : h.future;
+    const snap = from.pop();
+    if (!snap) return;
+    (direction === "undo" ? h.future : h.past).push(h.present);
+    h.present = snap;
+    h.key = snapshotKey(snap.flows, snap.pos);
+    // Text typed into a hint is not part of the history: keep what is there now.
+    const hints = new Map(flowsRef.current.map((flow) => [flow.id, flow.hint]));
+    setFlows(
+      snap.flows.map((flow) => ({
+        ...flow,
+        hint: hints.get(flow.id) ?? flow.hint,
+      })),
+    );
+    setPos(snap.pos);
+    const alive = new Set(nodeIds(snap.flows));
+    setSelected((old) => old.filter((id) => alive.has(id)));
+  }
+
+  useEffect(() => {
+    if (pending || (storeKey && !loaded) || isBusy(flows) || dragging.current)
+      return;
+    const timer = window.setTimeout(commitHistory, history.current ? 350 : 0);
+    return () => window.clearTimeout(timer);
+  }, [flows, pos, pending, loaded, storeKey]);
+
+  // The canvas belongs to the account: signed out there is none, and another account never sees it.
   useEffect(() => {
     if (pending) return;
     const before = lastKey.current;
     lastKey.current = storeKey;
     if (before === storeKey) return;
+    // A different board starts with a clean undo history.
+    history.current = null;
     setLoaded(false);
     setOpenId(null);
     setSelected([]);
@@ -1270,7 +1358,14 @@ function MimicTool({
       }
       const mod = event.metaKey || event.ctrlKey;
       const ids = selectedRef.current;
-      if (mod && (event.key === "=" || event.key === "+")) {
+      const letter = event.key.toLowerCase();
+      if (mod && letter === "z") {
+        event.preventDefault();
+        api.current.history(event.shiftKey ? "redo" : "undo");
+      } else if (event.ctrlKey && !event.metaKey && letter === "y") {
+        event.preventDefault();
+        api.current.history("redo");
+      } else if (mod && (event.key === "=" || event.key === "+")) {
         event.preventDefault();
         api.current.zoomBy(1.25);
       } else if (mod && event.key === "-") {
@@ -1367,6 +1462,7 @@ function MimicTool({
       )
         return;
       dragged.current = true;
+      dragging.current = true;
       const z = view.current.z;
       const dx = (next.clientX - sx) / z;
       const dy = (next.clientY - sy) / z;
@@ -1384,6 +1480,10 @@ function MimicTool({
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      if (dragging.current) {
+        dragging.current = false;
+        window.setTimeout(commitHistory, 80);
+      }
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -1829,13 +1929,7 @@ function MimicTool({
   /** Remove whole rows (image node) or single blocks (block node). */
   function removeNodes(ids: string[]) {
     const gone = new Set(ids);
-    for (const flow of flows) {
-      if (gone.has(`img-${flow.id}`)) {
-        prepared.current.delete(flow.id);
-        if (flow.picture?.startsWith("blob:"))
-          URL.revokeObjectURL(flow.picture);
-      }
-    }
+    // The picture and its shrunk copy stay in memory so that undo can bring the row back whole.
     setFlows((old) =>
       old.flatMap((flow) =>
         gone.has(`img-${flow.id}`)
@@ -1879,6 +1973,7 @@ function MimicTool({
     focus: (ids, mode) => focus(ids, mode),
     remove: removeNodes,
     nudge,
+    history: stepHistory,
   };
 
   function onDrop(event: DragEvent) {
