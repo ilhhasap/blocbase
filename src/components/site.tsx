@@ -10,7 +10,6 @@ import { FREE_COPIES } from "@/lib/copy-limit";
 import { listSavedBlocks, mergeSavedBlocks, setSavedBlock } from "@/lib/saved";
 import { recordCopyEvent, recordCopyFailureEvent } from "@/lib/stats";
 import { BlockView } from "@/components/block-view";
-import { CodeMenu } from "@/components/code-menu";
 import { SortMenu } from "@/components/sort-menu";
 import { Editor } from "@/components/editor";
 import { AuthModal } from "@/components/auth-modal";
@@ -640,28 +639,20 @@ export function Site() {
                           </div>
                           <QcLayer blockId={block.id} blockName={block.name} where="card" />
                           <span className="cname">{block.name}</span>
-                          <div className="card-actions">
-                            <button
-                              type="button"
-                              className="copy"
-                              data-on={copied === block.id ? "true" : "false"}
-                              aria-label={`Copy ${block.name} to Figma`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                const kit = kitIn(event.currentTarget.closest("article"));
-                                void onCopy(block, kit instanceof HTMLElement ? kit : null);
-                              }}
-                            >
-                              <FigmaMark />
-                              {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
-                            </button>
-                            <CodeMenu
-                              variant="card"
-                              onNotify={setToast}
-                              name={block.name}
-                              source={() => kitIn(document.getElementById(`block-${block.id}`))?.outerHTML ?? null}
-                            />
-                          </div>
+                          <button
+                            type="button"
+                            className="copy"
+                            data-on={copied === block.id ? "true" : "false"}
+                            aria-label={`Copy ${block.name} to Figma`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              const kit = kitIn(event.currentTarget.closest("article"));
+                              void onCopy(block, kit instanceof HTMLElement ? kit : null);
+                            }}
+                          >
+                            <FigmaMark />
+                            {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
+                          </button>
                         </article>
                       ))}
                     </div>
