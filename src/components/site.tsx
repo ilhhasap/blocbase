@@ -518,6 +518,12 @@ export function Site() {
               }}
             >
               Mimic
+              <span className="ai-pill" title="Made with AI">
+                <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M6 0.6 7.2 4.8 11.4 6 7.2 7.2 6 11.4 4.8 7.2 0.6 6 4.8 4.8Z" fill="currentColor" />
+                </svg>
+                AI
+              </span>
             </Link>
           </nav>
         </div>
