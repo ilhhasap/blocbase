@@ -4624,3 +4624,47 @@ button.free-ghost {
     animation-delay: 0.3s;
   }
 }
+
+/* FAQ: one box per question, the column stays centred */
+.questions {
+  max-width: 640px;
+}
+
+.questions dl {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.qa {
+  padding: 20px 24px;
+  border: 1px solid var(--glass-line);
+  border-radius: 22px;
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  transition:
+    transform 0.25s var(--mm-ease, cubic-bezier(0.2, 0.8, 0.2, 1)),
+    background 0.2s;
+}
+
+.qa:hover {
+  background: var(--glass-strong);
+  transform: translateY(-2px);
+}
+
+.questions .qa dt {
+  margin: 0;
+}
+
+.questions .qa dd {
+  margin: 8px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa:hover {
+    transform: none;
+  }
+}
