@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, type Block, type Category, type Group } from "@/data/blocks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -73,9 +74,6 @@ function nearWhite(color: string) {
   return alpha >= 0.95 && Math.min(Number(match[1]), Number(match[2]), Number(match[3])) >= 245;
 }
 
-/** Width the editor shows a block that fills its container (its frame is 360px, or the block's own minimum). */
-const editorWidth = (block: Block) => Math.max(360, block.minW ?? 0);
-
 /**
  * A live text field draws its placeholder as a separate, absolutely placed span next to an empty editable
  * one. The converter puts such a span far outside the field. Fold the placeholder into the editable span
@@ -94,8 +92,48 @@ function foldPlaceholders(root: Element) {
   }
 }
 
+/**
+ * Draws the block the way the editor panel does (same frame, same sizing) in a hidden spot, so a copy from a
+ * homepage card pastes at exactly the size the panel gives, not at the size of the card preview.
+ */
+async function mountLikeEditor(id: string): Promise<{ kit: HTMLElement | null; dispose: () => void }> {
+  const host = document.createElement("div");
+  host.className = "bench-frame";
+  host.setAttribute("aria-hidden", "true");
+  host.style.cssText = "position:fixed;top:0;left:-10000px;pointer-events:none";
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  root.render(<BlockView id={id} />);
+  let kit: HTMLElement | null = null;
+  for (let waited = 0; waited < 2000 && !kit; waited += 30) {
+    await new Promise((resolve) => window.setTimeout(resolve, 30));
+    const found = kitIn(host);
+    if (found && found.offsetWidth > 0) kit = found;
+  }
+  // Let the block settle (fonts, the fit-to-frame measurement) before it is read.
+  if (kit) await new Promise((resolve) => window.setTimeout(resolve, 150));
+  return {
+    kit,
+    dispose: () => {
+      root.unmount();
+      host.remove();
+    },
+  };
+}
+
 /** The block as Figma clipboard HTML. Throws when it cannot be built. */
 async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
+  const inEditor = Boolean(hostOf(kit)?.closest(".bench-frame"));
+  if (inEditor || block.id.startsWith("mimic-")) return convertKit(block, kit);
+  const copy = await mountLikeEditor(block.id);
+  try {
+    return await convertKit(block, copy.kit ?? kit);
+  } finally {
+    copy.dispose();
+  }
+}
+
+async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
   const { generateFromElement, inlineComputedStyles } = await import("@magicpatterns/html-to-figma");
   // A block shown scaled down is copied at its real size.
   // The Mimic canvas zooms its whole world; measuring through that scale would shrink every box but not its text.
@@ -112,18 +150,12 @@ async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   const rootFill = getComputedStyle(kit).backgroundColor;
   const clearRoot = /^(transparent|rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\))$/.test(getComputedStyle(kit).backgroundColor);
   if (clearRoot) kit.style.backgroundColor = block.id.startsWith("mimic-") ? "#ffffff" : "rgba(255, 255, 255, 0.004)";
-  // A block that fills its container is copied at the width the editor shows it, wherever it is copied from,
-  // so the card on the homepage and the editor give the same frame.
-  const widthBefore = kit.style.width;
-  const fitWidth = kit.style.width === "100%" && !block.id.startsWith("mimic-") && !hostOf(kit)?.closest(".bench-frame");
-  if (fitWidth) kit.style.width = `${editorWidth(block)}px`;
   let inlined: string;
   try {
     inlined = inlineComputedStyles(kit);
   } finally {
     for (const [node, before] of scaled) node.style.transform = before;
     if (clearRoot) kit.style.backgroundColor = bgBefore;
-    if (fitWidth) kit.style.width = widthBefore;
   }
   const clone = new DOMParser().parseFromString(inlined, "text/html").body.firstElementChild;
   if (!clone) throw new Error("empty frame");
