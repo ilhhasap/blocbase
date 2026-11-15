@@ -102,7 +102,8 @@ async function buildFigmaHtml(block: Block, kit: HTMLElement): Promise<string> {
   if (!clone) throw new Error("empty frame");
   // The converter drops a solid white (or nearly white) fill on the outer frame, so the pasted frame
   // is see-through. A white-to-white gradient survives and looks the same.
-  if (block.id.startsWith("mimic-") && clone instanceof HTMLElement && (clearRoot || nearWhite(rootFill))) {
+  // Every block with a white card (forms, pricing, dialogs) needs it; a Mimic block with no fill gets one too.
+  if (clone instanceof HTMLElement && ((clearRoot && block.id.startsWith("mimic-")) || nearWhite(rootFill))) {
     // Appended as text: going through `style` would merge the longhands the converter reads.
     clone.setAttribute("style", `${clone.getAttribute("style") ?? ""};background-image:linear-gradient(#ffffff, #ffffff)`);
   }
