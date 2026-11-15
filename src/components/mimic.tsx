@@ -590,41 +590,104 @@ const WORKING_STEPS = [
   "Almost there",
 ];
 
+/** A small cluster of dots that turns: the "AI is working" mark. */
+function Spark() {
+  return (
+    <svg
+      className="mimic-spark"
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      aria-hidden="true"
+    >
+      <circle cx="9" cy="3.2" r="1.7" />
+      <circle cx="14.6" cy="11.6" r="1.3" />
+      <circle cx="4.6" cy="12.4" r="2.1" />
+    </svg>
+  );
+}
+
+const elapsed = (seconds: number) =>
+  seconds < 60
+    ? `${seconds}s`
+    : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+
 /**
- * What shows while a block is being made: a line that moves on every couple of seconds, so it feels like progress.
- * A detailed image can take a minute or more, so after a while it says so honestly, shows how long it has been,
- * and offers to stop waiting.
+ * What shows while a block is being made: a turning mark, a line that moves on every couple of seconds, the time
+ * it has taken, and a chevron that opens the steps so far. A detailed image can take a minute or more, so after a
+ * while it says so and offers to stop waiting.
  */
 function Working({ onCancel }: { onCancel: () => void }) {
   const [seconds, setSeconds] = useState(0);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     const timer = window.setInterval(() => setSeconds((n) => n + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
   const slow = seconds >= 20;
   const step = Math.min(Math.floor(seconds / 2.4), WORKING_STEPS.length - 1);
-  const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
   return (
-    <span className="mimic-working-wrap">
-      <span className="mimic-working" role="status">
-        <span key={slow ? "slow" : step} className="mimic-working-text">
-          {slow ? "Detailed images take longer" : WORKING_STEPS[step]}
+    <span className="mimic-working-wrap" role="status">
+      <button
+        type="button"
+        className="mimic-work-row"
+        aria-expanded={open}
+        onClick={() => setOpen((on) => !on)}
+      >
+        <Spark />
+        <span key={slow ? "slow" : step} className="mimic-work-text">
+          {slow ? "Still working on a detailed image" : WORKING_STEPS[step]}
         </span>
-        <span className="mimic-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-      </span>
-      {seconds >= 6 ? (
-        <span className="mimic-wait">
-          <span className="mimic-clock">{clock}</span>
-          {slow ? (
-            <button type="button" className="mimic-link" onClick={onCancel}>
-              Stop waiting
-            </button>
-          ) : null}
-        </span>
+        <span className="mimic-work-time">{elapsed(seconds)}</span>
+        <svg
+          className="mimic-work-chev"
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="m4.5 3 3 3-3 3"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open ? (
+        <ul className="mimic-work-steps">
+          {WORKING_STEPS.slice(0, step + 1).map((label, index) => (
+            <li key={label} data-done={index < step ? "true" : "false"}>
+              {index < step ? (
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m2.5 6.4 2.2 2.2 4.8-5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <Spark />
+              )}
+              {label}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {slow ? (
+        <button type="button" className="mimic-link" onClick={onCancel}>
+          Stop waiting
+        </button>
       ) : null}
     </span>
   );
