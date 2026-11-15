@@ -4326,14 +4326,35 @@ button.free-ghost {
     0 16px 36px rgba(10, 132, 255, 0.2);
 }
 
-.mimic-prompt input::placeholder {
+.mimic-prompt-field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+}
+
+.mimic-prompt-field input {
+  width: 100%;
+}
+
+.mimic-prompt-tip {
+  position: absolute;
+  left: 0;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--color-ink-4);
+  font: 400 12.5px/1 var(--font-sans);
+  pointer-events: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition:
     opacity 0.25s,
     transform 0.3s var(--mm-ease);
 }
 
-.mimic-prompt:focus-within input::placeholder {
-  opacity: 0.45;
+.mimic-prompt:focus-within .mimic-prompt-tip {
+  opacity: 0.5;
   transform: translateX(3px);
 }
 
@@ -4343,8 +4364,17 @@ button.free-ghost {
     transform 0.3s var(--mm-spring);
 }
 
-.mimic-prompt:has(input:not(:placeholder-shown)) button {
+.mimic-prompt button:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(23, 24, 26, 0.3);
   transform: translateY(-1px) scale(1.08);
+}
+
+.mimic-prompt button:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.14);
+}
+
+.mimic-prompt button:not(:disabled):active {
+  transform: scale(0.95);
 }
 
 /* Pressable things dip a little under the finger and lift when hovered */
@@ -4666,5 +4696,11 @@ button.free-ghost {
 @media (prefers-reduced-motion: reduce) {
   .qa:hover {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mimic-prompt-tip {
+    animation: mm-step 0.4s var(--mm-ease) backwards;
   }
 }
