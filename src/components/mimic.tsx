@@ -2109,12 +2109,15 @@ function MimicTool({
               !out &&
               !noShot &&
               flow.runs.length < MAX_RUNS;
+            // Why Clone is off, said out loud under the toolbar instead of only in a tooltip.
             const buildTitle =
               flow.runs.length >= MAX_RUNS
-                ? "Remove a version to make another"
+                ? `You can keep ${MAX_RUNS} versions. Remove one to clone again.`
                 : noShot
-                  ? "Press Replace and add the screenshot again to clone it"
-                  : undefined;
+                  ? "The screenshot was not kept. Press Replace and add it again."
+                  : out
+                    ? "No Claude runs left today. Pick a free model to keep going."
+                    : undefined;
             return (
               <Fragment key={flow.id}>
                 <div
@@ -2242,6 +2245,11 @@ function MimicTool({
                           <SendIcon />
                         </button>
                       </form>
+                      {signedIn && !busyFlow && !canBuild && buildTitle ? (
+                        <p className="mimic-why" role="status">
+                          {buildTitle}
+                        </p>
+                      ) : null}
                     </>
                   ) : null}
                 </div>
