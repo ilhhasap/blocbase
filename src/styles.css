@@ -5021,3 +5021,20 @@ button.free-ghost {
 .mimic-ring-fill[data-empty="true"] {
   opacity: 0;
 }
+
+.mimic-ring {
+  position: relative;
+}
+
+.mimic-ring svg {
+  position: absolute;
+  inset: 4px;
+}
+
+.mimic-ring-n {
+  position: relative;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: #17181a;
+}
