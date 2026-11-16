@@ -5064,3 +5064,50 @@ button.free-ghost {
 .mimic-ring-n {
   font-size: 12px;
 }
+
+/* The controls under a block float below it and show on hover, so they take no room of their own. */
+.mimic-out .mimic-edit {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 3;
+  width: max-content;
+  min-width: 300px;
+  max-width: 100%;
+  margin: 0;
+  padding: 10px;
+  border-radius: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Keeps the hover alive across the gap between the block and its controls. */
+.mimic-out .mimic-edit::before {
+  content: "";
+  position: absolute;
+  inset: -14px 0 auto;
+  height: 14px;
+}
+
+.mimic-out:hover .mimic-edit,
+.mimic-out:focus-within .mimic-edit,
+.mimic-out[data-working="true"] .mimic-edit {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+@media (hover: none) {
+  .mimic-out .mimic-edit {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+  }
+}
+
+.mimic-out > .mimic-label .mimic-spark {
+  width: 14px;
+  height: 14px;
+}

@@ -106,6 +106,8 @@ const MAX_ZOOM = 2;
 const IMG_W = 300;
 const GAP_X = 110;
 const ROW = 460;
+/** Space kept under a block for the floating edit controls when another block is placed below it. */
+const EDIT_ROOM = 190;
 
 type Props = {
   signedIn: boolean;
@@ -1976,7 +1978,14 @@ function MimicTool({
     setPos((old) => ({
       ...old,
       [`out-${run.id}`]: lastSpot
-        ? { x: lastSpot.x, y: lastSpot.y + ROW }
+        ? {
+            x: lastSpot.x,
+            // Below the last block as drawn, with room for the controls that float under it.
+            y:
+              lastSpot.y +
+              Math.max(240, sizesRef.current[`out-${last!.id}`]?.h ?? 240) +
+              EDIT_ROOM,
+          }
         : { x: image.x + IMG_W + GAP_X, y: image.y },
     }));
     setFlows((old) =>
@@ -2276,6 +2285,17 @@ function MimicTool({
                     >
                       {result ? (
                         <>
+                          {result.model ? (
+                            <p className="mimic-label">
+                              <Spark /> Made with{" "}
+                              {MIMIC_MODELS.find(
+                                (item) => item.id === result.model,
+                              )?.label ?? result.model}
+                              {providerOf(result.model) === "openrouter"
+                                ? " · Free"
+                                : ""}
+                            </p>
+                          ) : null}
                           <article
                             id={`block-${result.id}`}
                             className="card"
@@ -2321,17 +2341,6 @@ function MimicTool({
                             </button>
                           </article>
                           <div className="mimic-node mimic-edit">
-                            {result.model ? (
-                              <p className="mimic-by">
-                                Made with{" "}
-                                {MIMIC_MODELS.find(
-                                  (item) => item.id === result.model,
-                                )?.label ?? result.model}
-                                {providerOf(result.model) === "openrouter"
-                                  ? " · Free"
-                                  : ""}
-                              </p>
-                            ) : null}
                             <form
                               onSubmit={(event) => {
                                 event.preventDefault();
@@ -2504,7 +2513,7 @@ function MimicTool({
               <span>
                 {status.resetsAt
                   ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-                  : "5-hour limit"}
+                  : ""}
               </span>
             </div>
             <div
