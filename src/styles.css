@@ -5106,3 +5106,8 @@ button.free-ghost {
     transform: translate(-50%, 0);
   }
 }
+
+.mimic-out > .mimic-label .mimic-spark {
+  width: 14px;
+  height: 14px;
+}
