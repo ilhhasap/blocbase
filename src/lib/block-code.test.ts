@@ -93,3 +93,21 @@ test("inherited font and zero defaults are not repeated", () => {
   assert.ok(!out.includes("padding"));
   assert.ok(!out.includes("flex-direction"));
 });
+
+test("a block that filled its card keeps its measured width", () => {
+  const html =
+    '<div class="kit" data-w="320" style="display: flex; width: 100%"><span>x</span></div>';
+  assert.ok(blockToHtml(html)!.includes("width: 320px"));
+  assert.ok(blockToReact(html, "x")!.includes('width: "320px"'));
+  const bare = '<div class="kit" style="display: flex; width: 100%"><span>x</span></div>';
+  assert.ok(!blockToHtml(bare)!.includes("width"));
+});
+
+test("a negative gap becomes a negative margin on later children", () => {
+  const html =
+    '<div class="kit" style="display: flex; gap: 0px; --ax-gap: -11px"><div style="width: 4px"></div><div style="width: 22px"></div></div>';
+  const out = blockToHtml(html)!;
+  assert.ok(!out.includes("--ax-gap"));
+  assert.ok(out.includes("margin-left: -11px"));
+  assert.ok(blockToReact(html, "x")!.includes('marginLeft: "-11px"'));
+});
