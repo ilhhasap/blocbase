@@ -4909,3 +4909,45 @@ button.free-ghost {
   font-weight: 500;
   color: var(--muted, #6f6e68);
 }
+
+.mimic-quota {
+  display: flex;
+  width: 240px;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mimic-quota-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-ink-2, #17181a);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mimic-quota-row span:last-child {
+  color: var(--color-ink-4);
+  font-weight: 400;
+}
+
+.mimic-quota-free {
+  margin-top: 2px;
+}
+
+.mimic-quota-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 24, 26, 0.1);
+}
+
+.mimic-quota-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #17181a;
+  transition: width 0.3s ease;
+}
