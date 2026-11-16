@@ -37,7 +37,14 @@ import { renderBlockPng } from "@/lib/mimic-render";
  */
 export const MIMIC_ENABLED = import.meta.env.VITE_MIMIC_ENABLED === "true";
 
-type Result = { id: string; name: string; html: string; note: string };
+type Result = {
+  id: string;
+  name: string;
+  html: string;
+  note: string;
+  /** The model that drew it, so the block says who made it. */
+  model?: string;
+};
 /** One block on the board: a result (or its error) that grows out of an image node. */
 type Run = {
   id: string;
@@ -240,6 +247,7 @@ function revive(item: Partial<Result> | undefined): Result | null {
     name: String(item.name ?? "Mimic block").slice(0, 40),
     html,
     note: String(item.note ?? ""),
+    model: isMimicModel(item.model) ? item.model : undefined,
   };
 }
 
@@ -1935,7 +1943,7 @@ function MimicTool({
         working: false,
         refining: false,
         instruction: mode === "edit" ? "" : run.instruction,
-        result: { id, name: out.name, html: next, note: out.note },
+        result: { id, name: out.name, html: next, note: out.note, model },
       });
       setStatus((old) =>
         old ? { ...old, used: out.used, limit: out.limit } : old,
@@ -2305,6 +2313,17 @@ function MimicTool({
                             </button>
                           </article>
                           <div className="mimic-node mimic-edit">
+                            {result.model ? (
+                              <p className="mimic-by">
+                                Made with{" "}
+                                {MIMIC_MODELS.find(
+                                  (item) => item.id === result.model,
+                                )?.label ?? result.model}
+                                {providerOf(result.model) === "openrouter"
+                                  ? " · Free"
+                                  : ""}
+                              </p>
+                            ) : null}
                             <form
                               onSubmit={(event) => {
                                 event.preventDefault();
@@ -2434,8 +2453,8 @@ function MimicTool({
                   ? status.pass
                     ? `Free pass: no daily limit${status.mock ? " · mock mode, no model is called" : ""}`
                     : left === 0
-                      ? `You have used all ${status.limit} for today${status.resetsAt ? `. More after ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}.` : "."}`
-                      : `${left} of ${status.limit} left today${status.mock ? " · mock mode, no model is called" : ""}`
+                      ? `You have used all ${status.limit} Claude runs for today${status.resetsAt ? `. More after ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}${status.providers?.openrouter ? ". Free models still work." : "."}`
+                      : `${left} of ${status.limit} Claude runs left today${status.providers?.openrouter ? " · Free models: no daily limit" : ""}${status.mock ? " · mock mode, no model is called" : ""}`
                   : ""}
           </p>
         </div>

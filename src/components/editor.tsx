@@ -638,7 +638,13 @@ export function Editor({
           <CodeHover
             onNotify={onNotify}
             name={block.name}
-            source={() => kitIn(frameRef.current)?.outerHTML ?? null}
+            source={() => {
+              const kit = kitIn(frameRef.current);
+              // Carry the width the block is shown at, so the code does not stretch to its container.
+              return kit
+                ? kit.outerHTML.replace(/^<div/, `<div data-w="${kit.offsetWidth}"`)
+                : null;
+            }}
           />
           {tune &&
           baseRef.current &&
