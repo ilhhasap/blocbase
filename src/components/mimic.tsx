@@ -2434,8 +2434,8 @@ function MimicTool({
                   ? status.pass
                     ? `Free pass: no daily limit${status.mock ? " · mock mode, no model is called" : ""}`
                     : left === 0
-                      ? `You have used all ${status.limit} for today${status.resetsAt ? `. More after ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}.` : "."}`
-                      : `${left} of ${status.limit} left today${status.mock ? " · mock mode, no model is called" : ""}`
+                      ? `You have used all ${status.limit} Claude runs for today${status.resetsAt ? `. More after ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}${status.providers?.openrouter ? ". Free models still work." : "."}`
+                      : `${left} of ${status.limit} Claude runs left today${status.providers?.openrouter ? " · Free models: no daily limit" : ""}${status.mock ? " · mock mode, no model is called" : ""}`
                   : ""}
           </p>
         </div>
