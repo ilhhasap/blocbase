@@ -2444,19 +2444,56 @@ function MimicTool({
 
       <div className="mimic-hud">
         <div className="mimic-bar">
-          <p className="mimic-meta mimic-status" aria-live="polite">
-            {!signedIn
-              ? "Free with an account."
-              : status?.configured === false
-                ? "Mimic is not set up on this server: add ANTHROPIC_API_KEY."
-                : status
-                  ? status.pass
+          {signedIn && status && status.configured !== false && !status.pass ? (
+            <div className="mimic-quota" aria-live="polite">
+              <div className="mimic-quota-row">
+                <span>Claude runs</span>
+                <span>
+                  {left === 0
+                    ? status.resetsAt
+                      ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+                      : "None left today"
+                    : `${left} of ${status.limit} left`}
+                </span>
+              </div>
+              <div
+                className="mimic-quota-track"
+                role="progressbar"
+                aria-label="Claude runs used today"
+                aria-valuemin={0}
+                aria-valuemax={status.limit}
+                aria-valuenow={Math.min(status.used, status.limit)}
+              >
+                <i
+                  style={{
+                    width: `${Math.min(100, (status.used / Math.max(1, status.limit)) * 100)}%`,
+                  }}
+                />
+              </div>
+              {status.providers?.openrouter ? (
+                <div className="mimic-quota-row mimic-quota-free">
+                  <span>Free models</span>
+                  <span>No daily limit</span>
+                </div>
+              ) : null}
+              {status.mock ? (
+                <div className="mimic-quota-row mimic-quota-free">
+                  <span>Mock mode</span>
+                  <span>No model is called</span>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mimic-meta mimic-status" aria-live="polite">
+              {!signedIn
+                ? "Free with an account."
+                : status?.configured === false
+                  ? "Mimic is not set up on this server: add ANTHROPIC_API_KEY."
+                  : status?.pass
                     ? `Free pass: no daily limit${status.mock ? " · mock mode, no model is called" : ""}`
-                    : left === 0
-                      ? `You have used all ${status.limit} Claude runs for today${status.resetsAt ? `. More after ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}${status.providers?.openrouter ? ". Free models still work." : "."}`
-                      : `${left} of ${status.limit} Claude runs left today${status.providers?.openrouter ? " · Free models: no daily limit" : ""}${status.mock ? " · mock mode, no model is called" : ""}`
-                  : ""}
-          </p>
+                    : ""}
+            </p>
+          )}
         </div>
         {error ? (
           <p className="mimic-error mimic-alert" role="alert">
