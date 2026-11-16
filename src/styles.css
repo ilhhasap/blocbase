@@ -5038,3 +5038,29 @@ button.free-ghost {
   line-height: 1;
   color: #17181a;
 }
+
+.mimic-quota-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mimic-quota-name .mimic-spark {
+  width: 14px;
+  height: 14px;
+}
+
+.mimic-ring {
+  width: 36px;
+  height: 36px;
+}
+
+.mimic-ring svg {
+  inset: 2px;
+  width: 32px;
+  height: 32px;
+}
+
+.mimic-ring-n {
+  font-size: 12px;
+}

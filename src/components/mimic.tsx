@@ -433,11 +433,11 @@ function blockWidth(html: string) {
 }
 
 const MODEL_GROUPS = [
-  { provider: "anthropic", label: "Claude", note: "Uses your daily limit" },
+  { provider: "anthropic", label: "Claude", note: "Uses your 5-hour limit" },
   {
     provider: "openrouter",
     label: "Free",
-    note: "No daily limit, rate limited",
+    note: "No limit here, rate limited",
   },
 ] as const;
 
@@ -2116,7 +2116,7 @@ function MimicTool({
                 : noShot
                   ? "The screenshot was not kept. Press Replace and add it again."
                   : out
-                    ? "No Claude runs left today. Pick a free model to keep going."
+                    ? "No Claude runs left in this 5-hour window. Pick a free model to keep going."
                     : undefined;
             return (
               <Fragment key={flow.id}>
@@ -2459,7 +2459,7 @@ function MimicTool({
                 : status?.configured === false
                   ? "Mimic is not set up on this server: add ANTHROPIC_API_KEY."
                   : status?.pass
-                    ? `Free pass: no daily limit${status.mock ? " · mock mode, no model is called" : ""}`
+                    ? `Free pass: no limit${status.mock ? " · mock mode, no model is called" : ""}`
                     : ""}
             </p>
           ) : null}
@@ -2476,8 +2476,8 @@ function MimicTool({
           <button
             type="button"
             className="mimic-ring"
-            aria-label={`${left} of ${status.limit} Claude runs left today`}
-            title={`${left} of ${status.limit} Claude runs left today`}
+            aria-label={`${left} of ${status.limit} Claude runs left`}
+            title={`Claude: ${left} of ${status.limit} left in this 5-hour window`}
           >
             <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
               <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="mimic-ring-track" />
@@ -2498,19 +2498,19 @@ function MimicTool({
           </button>
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
-              <span>Claude runs</span>
+              <span className="mimic-quota-name">
+                <Spark /> Claude
+              </span>
               <span>
-                {left === 0
-                  ? status.resetsAt
-                    ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-                    : "None left today"
-                  : `${left} of ${status.limit} left`}
+                {status.resetsAt
+                  ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+                  : "5-hour limit"}
               </span>
             </div>
             <div
               className="mimic-quota-track"
               role="progressbar"
-              aria-label="Claude runs used today"
+              aria-label="Claude runs used in this 5-hour window"
               aria-valuemin={0}
               aria-valuemax={status.limit}
               aria-valuenow={Math.min(status.used, status.limit)}
@@ -2524,7 +2524,7 @@ function MimicTool({
             {status.providers?.openrouter ? (
               <div className="mimic-quota-row mimic-quota-free">
                 <span>Free models</span>
-                <span>No daily limit</span>
+                <span>No limit</span>
               </div>
             ) : null}
             {status.mock ? (
