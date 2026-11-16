@@ -2504,7 +2504,7 @@ function MimicTool({
               <span>
                 {status.resetsAt
                   ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-                  : "5-hour limit"}
+                  : ""}
               </span>
             </div>
             <div
