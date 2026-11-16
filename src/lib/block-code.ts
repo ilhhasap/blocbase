@@ -98,6 +98,8 @@ function declarations(
   style: string,
   root: boolean,
   font: string | null,
+  width: string | null = null,
+  extra: [string, string] | null = null,
 ): [string, string][] {
   const out: [string, string][] = [];
   for (const part of style.split(";")) {
@@ -113,8 +115,32 @@ function declarations(
       continue;
     if (prop === "flex-direction" && value === "row") continue;
     if (!root && prop === "font-family" && value === font) continue;
+    if (prop === "--ax-gap") continue;
+    if (root && prop === "width" && value === "100%") {
+      // A block that filled its card keeps the size it was shown at, so it does not stretch in a wide page.
+      if (width) out.push(["width", width]);
+      continue;
+    }
     out.push([prop, hexColors(value)]);
   }
+  if (extra) out.push(extra);
+  return out;
+}
+
+/** The width in px the page measured for the block (`data-w` on its outermost element). */
+const measuredWidth = (tree: Node) => {
+  const value = tree.attrs.find(([name]) => name === "data-w")?.[1];
+  return value && /^\d+(\.\d+)?$/.test(value) ? `${value}px` : null;
+};
+
+/** Children after the first get a negative margin when the parent overlaps them (a negative gap), since CSS gap cannot. */
+function overlap(node: Node): Map<Node | string, [string, string]> {
+  const out = new Map<Node | string, [string, string]>();
+  const style = node.attrs.find(([name]) => name === "style")?.[1] ?? "";
+  const gap = /--ax-gap:\s*(-\d+(?:\.\d+)?)px/.exec(style)?.[1];
+  if (!gap) return out;
+  const row = !/flex-direction:\s*column/.test(style);
+  node.children.slice(1).forEach((child) => out.set(child, [row ? "margin-left" : "margin-top", `${gap}px`]));
   return out;
 }
 
@@ -145,13 +171,15 @@ function printHtml(
   depth: number,
   root: boolean,
   font: string | null,
+  width: string | null,
+  extra: [string, string] | null = null,
 ): string[] {
   const pad = "  ".repeat(depth);
   const attrs = node.attrs
     .filter(([name]) => !skipAttr(name))
     .map(([name, value]) => {
       if (name === "style") {
-        const css = declarations(value, root, font)
+        const css = declarations(value, root, font, width, extra)
           .map(([prop, val]) => `${prop}: ${val}`)
           .join("; ");
         return css ? `style="${escapeAttr(css)}"` : "";
@@ -159,6 +187,8 @@ function printHtml(
       return `${name}="${escapeAttr(value)}"`;
     })
     .filter(Boolean);
+  if (extra && !node.attrs.some(([name]) => name === "style"))
+    attrs.push(`style="${extra[0]}: ${extra[1]}"`);
   const open = `<${node.tag}${attrs.length ? ` ${attrs.join(" ")}` : ""}`;
   if (SELF_CLOSING.has(node.tag) && !node.children.length)
     return [`${pad}${open} />`];
@@ -169,9 +199,10 @@ function printHtml(
     ];
   }
   const lines = [`${pad}${open}>`];
+  const pull = overlap(node);
   for (const child of node.children) {
     if (typeof child === "string") lines.push(`${pad}  ${escapeText(child)}`);
-    else lines.push(...printHtml(child, depth + 1, false, font));
+    else lines.push(...printHtml(child, depth + 1, false, font, null, pull.get(child) ?? null));
   }
   lines.push(`${pad}</${node.tag}>`);
   return lines;
@@ -189,13 +220,15 @@ function printJsx(
   depth: number,
   root: boolean,
   font: string | null,
+  width: string | null,
+  extra: [string, string] | null = null,
 ): string[] {
   const pad = "  ".repeat(depth);
   const attrs: string[][] = [];
   for (const [name, value] of node.attrs) {
     if (skipAttr(name)) continue;
     if (name === "style") {
-      const decls = declarations(value, root, font);
+      const decls = declarations(value, root, font, width, extra);
       if (!decls.length) continue;
       if (decls.length <= 2) {
         attrs.push([
@@ -216,6 +249,8 @@ function printJsx(
       ]);
     }
   }
+  if (extra && !node.attrs.some(([name]) => name === "style"))
+    attrs.push([`style={{ ${camel(extra[0])}: ${jsValue(extra[1])} }}`]);
   const multiline = attrs.some((attr) => attr.length > 1) || attrs.length > 3;
   const hollow = !node.children.length;
   const end = hollow ? "/>" : ">";
@@ -236,9 +271,10 @@ function printJsx(
     return [`${head[0]}${jsxText(node.children.join(" "))}</${node.tag}>`];
   }
   const lines = [...head];
+  const pull = overlap(node);
   for (const child of node.children) {
     if (typeof child === "string") lines.push(`${pad}  ${jsxText(child)}`);
-    else lines.push(...printJsx(child, depth + 1, false, font));
+    else lines.push(...printJsx(child, depth + 1, false, font, null, pull.get(child) ?? null));
   }
   lines.push(`${pad}</${node.tag}>`);
   return lines;
@@ -251,7 +287,7 @@ export function blockToHtml(html: string): string | null {
   return (
     [
       "<!-- Uses the Geist font. Assumes * { box-sizing: border-box } -->",
-      ...printHtml(tree, 0, true, rootFont(tree)),
+      ...printHtml(tree, 0, true, rootFont(tree), measuredWidth(tree)),
     ].join("\n") + "\n"
   );
 }
@@ -269,7 +305,7 @@ export function componentName(name: string): string {
 export function blockToReact(html: string, name: string): string | null {
   const tree = parse(html);
   if (!tree) return null;
-  const body = printJsx(tree, 2, true, rootFont(tree));
+  const body = printJsx(tree, 2, true, rootFont(tree), measuredWidth(tree));
   return [
     "// Uses the Geist font. Assumes * { box-sizing: border-box } in your CSS",
     `export function ${componentName(name)}() {`,

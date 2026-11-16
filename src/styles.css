@@ -4902,3 +4902,10 @@ button.free-ghost {
     font-size: 16px;
   }
 }
+
+.mimic-by {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted, #6f6e68);
+}
