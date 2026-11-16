@@ -4951,3 +4951,11 @@ button.free-ghost {
   background: #17181a;
   transition: width 0.3s ease;
 }
+
+.mimic-why {
+  max-width: 280px;
+  margin: 8px 4px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-ink-4);
+}
