@@ -2285,6 +2285,17 @@ function MimicTool({
                     >
                       {result ? (
                         <>
+                          {result.model ? (
+                            <p className="mimic-label">
+                              <Spark /> Made with{" "}
+                              {MIMIC_MODELS.find(
+                                (item) => item.id === result.model,
+                              )?.label ?? result.model}
+                              {providerOf(result.model) === "openrouter"
+                                ? " · Free"
+                                : ""}
+                            </p>
+                          ) : null}
                           <article
                             id={`block-${result.id}`}
                             className="card"
@@ -2330,17 +2341,6 @@ function MimicTool({
                             </button>
                           </article>
                           <div className="mimic-node mimic-edit">
-                            {result.model ? (
-                              <p className="mimic-by">
-                                Made with{" "}
-                                {MIMIC_MODELS.find(
-                                  (item) => item.id === result.model,
-                                )?.label ?? result.model}
-                                {providerOf(result.model) === "openrouter"
-                                  ? " · Free"
-                                  : ""}
-                              </p>
-                            ) : null}
                             <form
                               onSubmit={(event) => {
                                 event.preventDefault();
