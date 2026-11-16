@@ -16,7 +16,12 @@ import {
 export const mimicEnabled = () => process.env.VITE_MIMIC_ENABLED === "true";
 
 const DEFAULT_MODEL = process.env.MIMIC_MODEL || DEFAULT_MIMIC_MODEL;
-const PER_DAY = Math.max(1, Number(process.env.MIMIC_PER_DAY) || 3);
+/** Claude runs allowed per session. A session starts with a run and lasts 5 hours, like Claude's own limit. */
+const PER_SESSION = Math.max(
+  1,
+  Number(process.env.MIMIC_PER_SESSION ?? process.env.MIMIC_PER_DAY) || 3,
+);
+const SESSION_MS = 5 * 3600 * 1000;
 const MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 // Vercel refuses a request body over 4.5 MB, and a refine sends the screenshot and a render together.
 const MAX_BASE64 = 2_600_000; // about 1.9 MB of image
@@ -67,17 +72,36 @@ async function hasPass(userId: string): Promise<boolean> {
   return verified && allowed.includes(row.email.toLowerCase());
 }
 
+/**
+ * The person's current session: it opens with the first run after the last one ended and lasts 5 hours,
+ * and everything resets when it ends. `start` is null when no session is open.
+ */
+async function currentSession(userId: string) {
+  const sql = await getSql();
+  const rows = await sql.query<{ at: string }>(
+    `select created_at as at from mimic_runs
+     where user_id = $1 and status <> 'failed' and created_at > now() - interval '3 days'
+     order by created_at asc`,
+    [userId],
+  );
+  let start: Date | null = null;
+  let used = 0;
+  for (const row of rows) {
+    const at = new Date(row.at);
+    if (!start || at.getTime() >= start.getTime() + SESSION_MS) {
+      start = at;
+      used = 1;
+    } else used += 1;
+  }
+  if (start && start.getTime() + SESSION_MS <= Date.now()) return { start: null, used: 0 };
+  return { start, used };
+}
+
 export async function getMimicStatus(userId: string): Promise<MimicStatus> {
   if (!mimicEnabled()) throw new Error("Not found");
   const sql = await getSql();
-  const rows = await sql.query<{ n: string; first: string | null }>(
-    `select count(*) as n, min(created_at) as first from mimic_runs
-     where user_id = $1 and status <> 'failed' and created_at > now() - interval '24 hours'`,
-    [userId],
-  );
-  const used = Number(rows[0]?.n ?? 0);
+  const { start, used } = await currentSession(userId);
   const pass = await hasPass(userId);
-  const first = rows[0]?.first ? new Date(rows[0].first) : null;
   return {
     enabled: true,
     configured:
@@ -90,12 +114,10 @@ export async function getMimicStatus(userId: string): Promise<MimicStatus> {
     },
     mock: mockOn(),
     used,
-    limit: PER_DAY,
+    limit: PER_SESSION,
     pass,
     resetsAt:
-      !pass && used >= PER_DAY && first
-        ? new Date(first.getTime() + 24 * 3600 * 1000).toISOString()
-        : null,
+      !pass && start ? new Date(start.getTime() + SESSION_MS).toISOString() : null,
   };
 }
 
@@ -195,20 +217,21 @@ export async function generateMimic(
 
   const pass = await hasPass(userId);
   const sql = await getSql();
+  const session = await currentSession(userId);
   const taken = await sql.query<{ id: string }>(
     `insert into mimic_runs (user_id, model)
      select $1, $2
-     where ($4::boolean or (select count(*) from mimic_runs where user_id = $1 and status <> 'failed' and created_at > now() - interval '24 hours') < $3)
+     where ($4::boolean or $5::timestamptz is null or (select count(*) from mimic_runs where user_id = $1 and status <> 'failed' and created_at >= $5::timestamptz) < $3)
        and not exists (select 1 from mimic_runs where user_id = $1 and status = 'pending' and created_at > now() - interval '3 minutes')
      returning id`,
-    [userId, MODEL, PER_DAY, pass],
+    [userId, MODEL, PER_SESSION, pass, session.start?.toISOString() ?? null],
   );
   const runId = taken[0]?.id;
   if (!runId) {
     const status = await getMimicStatus(userId);
     throw new Error(
-      status.used >= PER_DAY
-        ? `You have used your ${PER_DAY} generations for today.`
+      status.used >= PER_SESSION
+        ? `You have used your ${PER_SESSION} Claude runs for this 5-hour session.`
         : "A generation is already running.",
     );
   }
@@ -237,7 +260,7 @@ export async function generateMimic(
         html: SAMPLE,
         note: "Mock mode.",
         used: 0,
-        limit: PER_DAY,
+        limit: PER_SESSION,
       };
     }
 
