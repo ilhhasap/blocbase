@@ -2452,46 +2452,7 @@ function MimicTool({
 
       <div className="mimic-hud">
         <div className="mimic-bar">
-          {signedIn && status && status.configured !== false && !status.pass ? (
-            <div className="mimic-quota" aria-live="polite">
-              <div className="mimic-quota-row">
-                <span>Claude runs</span>
-                <span>
-                  {left === 0
-                    ? status.resetsAt
-                      ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-                      : "None left today"
-                    : `${left} of ${status.limit} left`}
-                </span>
-              </div>
-              <div
-                className="mimic-quota-track"
-                role="progressbar"
-                aria-label="Claude runs used today"
-                aria-valuemin={0}
-                aria-valuemax={status.limit}
-                aria-valuenow={Math.min(status.used, status.limit)}
-              >
-                <i
-                  style={{
-                    width: `${Math.min(100, (status.used / Math.max(1, status.limit)) * 100)}%`,
-                  }}
-                />
-              </div>
-              {status.providers?.openrouter ? (
-                <div className="mimic-quota-row mimic-quota-free">
-                  <span>Free models</span>
-                  <span>No daily limit</span>
-                </div>
-              ) : null}
-              {status.mock ? (
-                <div className="mimic-quota-row mimic-quota-free">
-                  <span>Mock mode</span>
-                  <span>No model is called</span>
-                </div>
-              ) : null}
-            </div>
-          ) : (
+          {!(signedIn && status && status.configured !== false && !status.pass) ? (
             <p className="mimic-meta mimic-status" aria-live="polite">
               {!signedIn
                 ? "Free with an account."
@@ -2501,7 +2462,7 @@ function MimicTool({
                     ? `Free pass: no daily limit${status.mock ? " · mock mode, no model is called" : ""}`
                     : ""}
             </p>
-          )}
+          ) : null}
         </div>
         {error ? (
           <p className="mimic-error mimic-alert" role="alert">
@@ -2509,6 +2470,70 @@ function MimicTool({
           </p>
         ) : null}
       </div>
+
+      {signedIn && status && status.configured !== false && !status.pass ? (
+        <div className="mimic-usage">
+          <button
+            type="button"
+            className="mimic-ring"
+            aria-label={`${left} of ${status.limit} Claude runs left today`}
+          >
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="mimic-ring-track" />
+              <circle
+                cx="18"
+                cy="18"
+                r="14"
+                fill="none"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="mimic-ring-fill"
+                data-empty={status.used <= 0 ? "true" : "false"}
+                strokeDasharray={`${(Math.min(1, status.used / Math.max(1, status.limit)) * 2 * Math.PI * 14).toFixed(2)} 100`}
+                transform="rotate(-90 18 18)"
+              />
+            </svg>
+          </button>
+          <div className="mimic-quota mimic-pop" role="status">
+            <div className="mimic-quota-row">
+              <span>Claude runs</span>
+              <span>
+                {left === 0
+                  ? status.resetsAt
+                    ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+                    : "None left today"
+                  : `${left} of ${status.limit} left`}
+              </span>
+            </div>
+            <div
+              className="mimic-quota-track"
+              role="progressbar"
+              aria-label="Claude runs used today"
+              aria-valuemin={0}
+              aria-valuemax={status.limit}
+              aria-valuenow={Math.min(status.used, status.limit)}
+            >
+              <i
+                style={{
+                  width: `${Math.min(100, (status.used / Math.max(1, status.limit)) * 100)}%`,
+                }}
+              />
+            </div>
+            {status.providers?.openrouter ? (
+              <div className="mimic-quota-row mimic-quota-free">
+                <span>Free models</span>
+                <span>No daily limit</span>
+              </div>
+            ) : null}
+            {status.mock ? (
+              <div className="mimic-quota-row mimic-quota-free">
+                <span>Mock mode</span>
+                <span>No model is called</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <div
         className="mimic-tools"
