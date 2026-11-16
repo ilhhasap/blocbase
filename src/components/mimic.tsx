@@ -2477,6 +2477,7 @@ function MimicTool({
             type="button"
             className="mimic-ring"
             aria-label={`${left} of ${status.limit} Claude runs left today`}
+            title={`${left} of ${status.limit} Claude runs left today`}
           >
             <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
               <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="mimic-ring-track" />
@@ -2488,11 +2489,12 @@ function MimicTool({
                 strokeWidth="4"
                 strokeLinecap="round"
                 className="mimic-ring-fill"
-                data-empty={status.used <= 0 ? "true" : "false"}
-                strokeDasharray={`${(Math.min(1, status.used / Math.max(1, status.limit)) * 2 * Math.PI * 14).toFixed(2)} 100`}
+                data-empty={(left ?? 0) <= 0 ? "true" : "false"}
+                strokeDasharray={`${(Math.min(1, (left ?? 0) / Math.max(1, status.limit)) * 2 * Math.PI * 14).toFixed(2)} 100`}
                 transform="rotate(-90 18 18)"
               />
             </svg>
+            <span className="mimic-ring-n">{left}</span>
           </button>
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
