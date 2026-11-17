@@ -2312,7 +2312,10 @@ function MimicTool({
                         <>
                           {result.model ? (
                             <p className="mimic-label">
-                              <Spark /> Made with{" "}
+                              {providerOf(result.model) === "anthropic" ? (
+                                <ClaudeMark />
+                              ) : null}{" "}
+                              Made with{" "}
                               {MIMIC_MODELS.find(
                                 (item) => item.id === result.model,
                               )?.label ?? result.model}
