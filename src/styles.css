@@ -5111,3 +5111,14 @@ button.free-ghost {
   width: 14px;
   height: 14px;
 }
+
+.mimic-claude {
+  flex: none;
+  fill: #d97757;
+}
+
+.mimic-quota-reset {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted, #8a8a8a);
+}
