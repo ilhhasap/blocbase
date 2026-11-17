@@ -179,7 +179,7 @@ export function Site() {
     const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform;
     setIsMac(/mac|iphone|ipad/i.test(platform));
   }, []);
-  // The page comes from the URL: `/` components, `/sections`, `/pricing`.
+  // The page comes from the URL: `/library` components, `/sections`, `/pricing`.
   // `/b/<id>` is the same library with that block's editor open on top.
   const { page: pageParam, id: blockParam } = useParams({ strict: false }) as { page?: string; id?: string };
   const editing = BLOCKS.some((block) => block.id === blockParam) ? (blockParam ?? null) : null;
@@ -366,7 +366,7 @@ export function Site() {
 
   function goLibrary() {
     setCat(null);
-    void navigate({ to: "/{-$page}", params: { page: undefined } });
+    void navigate({ to: "/{-$page}", params: { page: "library" } });
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -496,7 +496,7 @@ export function Site() {
         <div className="lead">
           <Link
             to="/{-$page}"
-            params={{ page: undefined }}
+            params={{ page: "library" }}
             className="logo"
             aria-label="Block Supply home"
             onClick={() => {
@@ -517,7 +517,7 @@ export function Site() {
               <Link
                 key={name}
                 to="/{-$page}"
-                params={{ page: name === "Sections" ? "sections" : undefined }}
+                params={{ page: name === "Sections" ? "sections" : "library" }}
                 className="group-tab"
                 data-on={!ownPage && group === name ? "true" : "false"}
                 aria-current={!ownPage && group === name ? "page" : undefined}
@@ -563,7 +563,7 @@ export function Site() {
             onChange={(event) => {
               setQuery(event.target.value);
               if (event.target.value) setCat(null);
-              if (ownPage) void navigate({ to: "/{-$page}", params: { page: undefined } });
+              if (ownPage) void navigate({ to: "/{-$page}", params: { page: "library" } });
             }}
           />
           {query ? (
@@ -585,7 +585,7 @@ export function Site() {
             savedCount={saved.length}
             onSaved={() => {
               setOnlySaved(true);
-              if (ownPage) void navigate({ to: "/{-$page}", params: { page: undefined } });
+              if (ownPage) void navigate({ to: "/{-$page}", params: { page: "library" } });
               scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
@@ -765,7 +765,7 @@ export function Site() {
           busy={busy === editingBlock.id}
           copied={copied === editingBlock.id}
           onClose={() =>
-            void navigate({ to: "/{-$page}", params: { page: page === "sections" ? "sections" : undefined } })
+            void navigate({ to: "/{-$page}", params: { page: page === "sections" ? "sections" : "library" } })
           }
           onSave={() => requestSave(editingBlock.id)}
           onCopy={(kit) => void onCopy(editingBlock, kit)}
