@@ -617,6 +617,31 @@ function Spark() {
   );
 }
 
+/** The Claude starburst, standing still (Spark is the one that turns). */
+function ClaudeMark() {
+  return (
+    <svg
+      className="mimic-claude"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      {[0, 30, 60, 90, 120, 150].map((deg) => (
+        <rect
+          key={deg}
+          x="10.4"
+          y="1"
+          width="3.2"
+          height="22"
+          rx="1.6"
+          transform={`rotate(${deg} 12 12)`}
+        />
+      ))}
+    </svg>
+  );
+}
+
 const elapsed = (seconds: number) =>
   seconds < 60
     ? `${seconds}s`
@@ -2508,13 +2533,9 @@ function MimicTool({
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
               <span className="mimic-quota-name">
-                <Spark /> Claude
+                <ClaudeMark /> Claude
               </span>
-              <span>
-                {status.resetsAt
-                  ? `Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-                  : ""}
-              </span>
+              <span>{`${left} of ${status.limit} left`}</span>
             </div>
             <div
               className="mimic-quota-track"
@@ -2530,17 +2551,10 @@ function MimicTool({
                 }}
               />
             </div>
-            {status.providers?.openrouter ? (
-              <div className="mimic-quota-row mimic-quota-free">
-                <span>Free models</span>
-                <span>No limit</span>
-              </div>
-            ) : null}
-            {status.mock ? (
-              <div className="mimic-quota-row mimic-quota-free">
-                <span>Mock mode</span>
-                <span>No model is called</span>
-              </div>
+            {status.resetsAt ? (
+              <p className="mimic-quota-reset">
+                {`Resets at ${new Date(status.resetsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+              </p>
             ) : null}
           </div>
         </div>
