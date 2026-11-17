@@ -2061,13 +2061,36 @@ function MimicTool({
     });
   }
 
-  /** Put every row back in its default place, stacked from the top, and frame them. */
+  /**
+   * Lay the board out again from the real sizes of what is drawn: each row's picture on the left, its
+   * blocks in one column to the right with room for the floating controls under each, and the rows
+   * stacked with a wide gap, so that nothing touches anything else.
+   */
   function tidy() {
+    const size = (id: string, fallback: { w: number; h: number }) => {
+      const found = sizesRef.current[id];
+      return {
+        w: found?.w || fallback.w,
+        h: found?.h || fallback.h,
+      };
+    };
+    const LABEL = 40;
+    const BLOCK_GAP = 80;
+    const ROW_GAP = 200;
     let top = 0;
-    let next: Record<string, Point> = {};
+    const next: Record<string, Point> = {};
     for (const flow of flows) {
-      next = { ...next, ...placeFlow(flow, { x: 0, y: top }) };
-      top += Math.max(1, flow.runs.length) * ROW;
+      const image = size(`img-${flow.id}`, { w: IMG_W, h: 300 });
+      next[`img-${flow.id}`] = { x: 0, y: top + LABEL };
+      const column = image.w + GAP_X + 60;
+      let y = top + LABEL;
+      for (const run of flow.runs) {
+        const block = size(`out-${run.id}`, { w: 320, h: 240 });
+        next[`out-${run.id}`] = { x: column, y };
+        y += block.h + EDIT_ROOM + BLOCK_GAP + LABEL;
+      }
+      const stack = flow.runs.length ? y - LABEL - BLOCK_GAP : 0;
+      top = Math.max(top + LABEL + image.h, stack) + ROW_GAP;
     }
     refit.current = true;
     setPos(next);
