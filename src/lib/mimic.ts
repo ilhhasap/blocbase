@@ -24,6 +24,7 @@ export const mimicGenerate = createServerFn({ method: "POST" })
       html?: string;
       render?: string;
       instruction?: string;
+      facts?: string;
     }) => data,
   )
   .handler(async ({ context, data }): Promise<MimicResult> => {

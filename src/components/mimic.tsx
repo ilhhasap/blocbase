@@ -19,6 +19,7 @@ import { mimicGenerate, mimicStatus } from "@/lib/mimic";
 import type { MimicStatus } from "@/lib/mimic.server";
 import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
+import { describeFacts, dominantColors } from "@/lib/mimic-facts";
 import {
   DEFAULT_MIMIC_MODEL,
   MIMIC_MODELS,
@@ -81,6 +82,8 @@ type Prepared = {
   photo: boolean;
   sourceWidth: number;
   sourceHeight: number;
+  /** Colours measured from the picture with code, sent to the model as an extra fact. */
+  facts: string;
 };
 type Point = { x: number; y: number };
 type Size = { w: number; h: number };
@@ -207,6 +210,10 @@ async function prepare(file: File): Promise<Prepared> {
   small.getContext("2d")?.drawImage(canvas, 0, 0, small.width, small.height);
   const thumb = small.toDataURL("image/jpeg", 0.7);
 
+  const facts = describeFacts(
+    dominantColors(context.getImageData(0, 0, canvas.width, canvas.height)),
+  );
+
   // Kept small: the whole request, screenshot and any render of the block, must stay under Vercel's 4.5 MB.
   for (const quality of [0.92, 0.82, 0.7, 0.55, 0.4]) {
     const url = canvas.toDataURL("image/jpeg", quality);
@@ -221,6 +228,7 @@ async function prepare(file: File): Promise<Prepared> {
         photo: looksLikePhoto(canvas),
         sourceWidth,
         sourceHeight,
+        facts,
       };
     }
   }
@@ -1624,10 +1632,11 @@ function MimicTool({
     }
     const bw = x1 - x0;
     const bh = y1 - y0;
+    // A new picture is brought close (up to 140%), so it fills the screen instead of sitting small in the board.
     const fit = clamp(
       Math.min((W - pad.l - pad.r) / bw, (H - pad.t - pad.b) / bh),
       MIN_ZOOM,
-      1,
+      mode === "center" ? 1.4 : 1,
     );
     const v = view.current;
     let z = fit;
@@ -1944,6 +1953,7 @@ function MimicTool({
             hint: flow.hint,
             width: shot?.width,
             height: shot?.height,
+            facts: mode === "build" ? shot?.facts : undefined,
             model,
             html,
             render,
