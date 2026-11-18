@@ -141,6 +141,7 @@ export async function generateMimic(
     html?: unknown;
     render?: unknown;
     instruction?: unknown;
+    facts?: unknown;
   },
 ): Promise<MimicResult> {
   if (!mimicEnabled()) throw new Error("Not found");
@@ -198,11 +199,16 @@ export async function generateMimic(
       ? input.render
       : "";
 
+  // Colours the page measured from the picture; only a first build uses them.
+  const facts =
+    !current && typeof input.facts === "string"
+      ? input.facts.slice(0, 1000)
+      : "";
   const prompt = edit
     ? `${hint ? `What it is: ${hint}. ` : ""}Apply this change and keep everything else exactly as it is: ${instruction}.${size}\n\nCurrent HTML:\n${current}`
     : current
       ? `${hint ? `What it is: ${hint}. ` : ""}Correct this rebuild so it matches the screenshot.${size}${render ? " The second image is how the current HTML renders." : ""}\n\nCurrent HTML:\n${current}`
-      : `${hint ? `Rebuild this component. The user's notes (what it is, and anything to change from the screenshot, such as colours or what to leave out): ${hint}` : "Rebuild this component."}${size}`;
+      : `${hint ? `Rebuild this component. The user's notes (what it is, and anything to change from the screenshot, such as colours or what to leave out): ${hint}` : "Rebuild this component."}${size}${facts ? `\n\n${facts}` : ""}`;
 
   // Free models cost nothing, so they skip the daily limit and are not logged as runs.
   if (provider === "openrouter") {
