@@ -5,6 +5,7 @@ import {
   MIMIC_REFINE,
   MIMIC_SCHEMA,
   MIMIC_SYSTEM,
+  hasPlaceholders,
 } from "@/lib/mimic-prompt";
 import {
   DEFAULT_MIMIC_MODEL,
@@ -359,6 +360,12 @@ export async function generateMimic(
       await finish("failed", usage);
       throw new Error(note || "No component could be rebuilt from that image.");
     }
+    if (hasPlaceholders(html)) {
+      await finish("failed", usage);
+      throw new Error(
+        "The model left part of the block out. This run was not counted; try again.",
+      );
+    }
     if (html.length > MAX_HTML) {
       await finish("failed", usage);
       throw new Error(
@@ -536,6 +543,10 @@ async function generateViaOpenRouter(
     throw new Error(
       note ||
         "That model did not return a usable block. Try again or pick another.",
+    );
+  if (hasPlaceholders(html))
+    throw new Error(
+      "The model left part of the block out. Try again or pick another.",
     );
   if (html.length > MAX_HTML)
     throw new Error(
