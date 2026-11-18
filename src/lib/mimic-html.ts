@@ -2,6 +2,8 @@
  * The model's HTML is rebuilt element by element from an allow-list before it is drawn, so nothing it
  * writes can run code, load anything or reach outside its own box.
  */
+import { linePercent } from "@/lib/mimic-type";
+
 const HTML_TAGS = new Set([
   "div",
   "span",
@@ -168,6 +170,27 @@ function loosen(root: Element) {
   }
 }
 
+/** Text keeps its size; its line height becomes a percentage of that size, tighter for bigger text, at least 80%. */
+function lineHeights(root: Element) {
+  const sizeOf = (el: Element): number => {
+    for (let node: Element | null = el; node; node = node.parentElement) {
+      const value = node instanceof HTMLElement ? node.style.getPropertyValue("font-size") : "";
+      if (value.endsWith("px") && parseFloat(value) > 0) return parseFloat(value);
+    }
+    return 16;
+  };
+  for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
+    if (!(el instanceof HTMLElement)) continue;
+    const line = el.style.getPropertyValue("line-height");
+    const hasText = Array.from(el.childNodes).some(
+      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+    );
+    if (!line && !hasText) continue;
+    if (!line && !el.style.getPropertyValue("font-size")) continue;
+    el.style.setProperty("line-height", `${linePercent(sizeOf(el), line || null)}%`);
+  }
+}
+
 /** Clean HTML for one block, always a single `div.kit` root; null when nothing usable is left. */
 export function sanitizeBlockHtml(html: string): string | null {
   const doc = new DOMParser().parseFromString(
@@ -191,6 +214,7 @@ export function sanitizeBlockHtml(html: string): string | null {
   }
   root.setAttribute("class", "kit");
   loosen(root);
+  lineHeights(root);
   // A component with no fill at all would paste into Figma as a see-through frame; give it a white one.
   if (root instanceof HTMLElement) {
     const fill = `${root.style.getPropertyValue("background")} ${root.style.getPropertyValue("background-color")}`;
