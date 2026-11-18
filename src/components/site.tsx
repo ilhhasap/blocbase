@@ -93,6 +93,49 @@ function foldPlaceholders(root: Element) {
 }
 
 /**
+ * A one-line text whose box is wider than the text (a table cell that takes half the row, a label pushed to
+ * the end) pastes as a text layer that hugs the text, so its cell loses its width and the columns slide
+ * together. Wrapping the text in a span turns the box into a frame that keeps its measured width; the
+ * frame's alignment follows `text-align`. Returns a function that puts everything back.
+ */
+function pinTextBoxes(kit: HTMLElement): () => void {
+  const undo: Array<() => void> = [];
+  for (const el of Array.from(kit.querySelectorAll<HTMLElement>("*"))) {
+    if (el instanceof SVGElement || el.children.length) continue;
+    const texts = Array.from(el.childNodes).filter(
+      (node): node is Text => node.nodeType === 3 && Boolean(node.textContent?.trim()),
+    );
+    if (!texts.length || texts.length !== el.childNodes.length) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === "inline") continue;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const rects = Array.from(range.getClientRects());
+    const box = el.getBoundingClientRect();
+    const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
+    const textWidth = Math.max(...rects.map((rect) => rect.width), 0);
+    const padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    if (!textWidth || box.height > line * 1.5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)) continue;
+    if (box.width - padding - textWidth < 2) continue;
+    const span = document.createElement("span");
+    const before = el.getAttribute("style");
+    for (const text of texts) span.appendChild(text);
+    el.appendChild(span);
+    const align = cs.textAlign;
+    const justify = align === "center" ? "center" : align === "right" || align === "end" ? "flex-end" : "flex-start";
+    el.style.display = "flex";
+    el.style.justifyContent = justify;
+    undo.push(() => {
+      for (const text of Array.from(span.childNodes)) el.insertBefore(text, span);
+      span.remove();
+      if (before === null) el.removeAttribute("style");
+      else el.setAttribute("style", before);
+    });
+  }
+  return () => undo.reverse().forEach((fn) => fn());
+}
+
+/**
  * Draws the block the way the editor panel does (same frame, same sizing) in a hidden spot, so a copy from a
  * homepage card pastes at exactly the size the panel gives, not at the size of the card preview.
  */
@@ -151,9 +194,11 @@ async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
   const clearRoot = /^(transparent|rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\))$/.test(getComputedStyle(kit).backgroundColor);
   if (clearRoot) kit.style.backgroundColor = block.id.startsWith("mimic-") ? "#ffffff" : "rgba(255, 255, 255, 0.004)";
   let inlined: string;
+  const unpin = block.id.startsWith("mimic-") ? pinTextBoxes(kit) : () => {};
   try {
     inlined = inlineComputedStyles(kit);
   } finally {
+    unpin();
     for (const [node, before] of scaled) node.style.transform = before;
     if (clearRoot) kit.style.backgroundColor = bgBefore;
   }
