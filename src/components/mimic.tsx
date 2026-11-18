@@ -1632,10 +1632,11 @@ function MimicTool({
     }
     const bw = x1 - x0;
     const bh = y1 - y0;
+    // A new picture is brought close (up to 140%), so it fills the screen instead of sitting small in the board.
     const fit = clamp(
       Math.min((W - pad.l - pad.r) / bw, (H - pad.t - pad.b) / bh),
       MIN_ZOOM,
-      1,
+      mode === "center" ? 1.4 : 1,
     );
     const v = view.current;
     let z = fit;
