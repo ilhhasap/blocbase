@@ -93,6 +93,27 @@ function foldPlaceholders(root: Element) {
 }
 
 /**
+ * The converter takes a frame's border colour from the first side that has one, and a side without a border
+ * still reports the text colour (black), so `border-bottom: 1px solid #eee` pasted as a black line.
+ * Every side gets the colour of a side that really has a border.
+ */
+function fixBorderColors(root: Element) {
+  const sides = ["Top", "Right", "Bottom", "Left"] as const;
+  for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
+    if (!(el instanceof HTMLElement)) continue;
+    const style = el.style;
+    const real = sides.find(
+      (side) =>
+        parseFloat(style.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0 &&
+        style.getPropertyValue(`border-${side.toLowerCase()}-style`) !== "none",
+    );
+    const color = real && style.getPropertyValue(`border-${real.toLowerCase()}-color`);
+    if (!color) continue;
+    for (const side of sides) style.setProperty(`border-${side.toLowerCase()}-color`, color);
+  }
+}
+
+/**
  * A one-line text whose box is wider than the text (a table cell that takes half the row, a label pushed to
  * the end) pastes as a text layer that hugs the text, so its cell loses its width and the columns slide
  * together. Wrapping the text in a span turns the box into a frame that keeps its measured width; the
@@ -205,6 +226,7 @@ async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
   const clone = new DOMParser().parseFromString(inlined, "text/html").body.firstElementChild;
   if (!clone) throw new Error("empty frame");
   foldPlaceholders(clone);
+  fixBorderColors(clone);
   // The converter drops a solid white (or nearly white) fill on the outer frame, so the pasted frame
   // is see-through. A white-to-white gradient survives and looks the same.
   // Every block with a white card (forms, pricing, dialogs) needs it; a Mimic block with no fill gets one too.
