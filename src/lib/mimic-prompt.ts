@@ -13,11 +13,12 @@ Rules for "html":
 3. Give the root a fixed width in px and an explicit background colour (white if the image shows none). Never set a height or overflow on anything except small fixed-size boxes such as icons, avatars and dividers: cards, rows and text blocks take their height from their content, so text that wraps a line differently in Figma never runs over its neighbours. Give children width:100% when they fill their parent, otherwise let them hug their content. Use align-self:stretch for rows that fill a column. Text must wrap the way it does in the image: make the root as wide as the component is wide in proportion to its text, never narrower, or paragraphs turn into tall narrow columns.
 4. Text: font-family:Geist, sans-serif with font-size, font-weight, line-height and color on every text element, copied from the screenshot. Reproduce the text exactly, including capitalisation.
 5. Colours: read them from the image as hex. Keep border-radius, borders (1px solid colour) and box-shadow only where the image shows them.
-6. Icons and drawings: small inline <svg> with viewBox, using only path, circle, rect, line, polyline, polygon or ellipse with fill/stroke attributes (stroke-dasharray, stroke-dashoffset and transform are allowed). Keep every drawing cheap: at most about a dozen shapes. Repeated marks such as tick rings, dials, dots, bars or grids are ONE element with stroke-dasharray (for example a circle with stroke-dasharray="2 6" and a wide stroke), never one element per mark. Approximate an illustration, logo or photo with a few flat shapes in its main colours. The whole HTML should stay under about 6000 characters for a typical component; speed matters as much as detail.
+6. Icons and drawings: small inline <svg> with viewBox, using only path, circle, rect, line, polyline, polygon or ellipse with fill/stroke attributes (stroke-dasharray, stroke-dashoffset and transform are allowed). Keep every drawing cheap: at most about a dozen shapes. Repeated marks such as tick rings, dials, dots, bars or grids are ONE element with stroke-dasharray (for example a circle with stroke-dasharray="2 6" and a wide stroke), never one element per mark. Approximate an illustration, logo or photo with a few flat shapes in its main colours. Keep drawings cheap, but never save space on text or rows: the size limits apply to drawings only.
 7. Name every meaningful element with data-layer (e.g. "Title", "Email field", "Primary button"). Use div and span for everything, not form elements.
 8. Work out one scale factor before you write any CSS. Screenshots are usually captured at 2x or 3x, so pixel measures in the image are two or three times the CSS px. Find the body text in the image (its x-height or line pitch), decide what it would be in CSS px (normally 14 to 16px, small captions 12 to 13px, a title 20 to 28px, a hero heading up to 40px), and divide every measure by the same factor: font sizes, widths, heights, padding, gaps, radii, icon sizes. Do not scale some things and not others. Typical card, dialog and popover widths are 320 to 560px; if your root is wider than 640px or your body text is over 18px, you did not divide enough.
 9. Keep the proportions of the image: the root's width to height ratio, the share of the width each column or row takes, and the ratio of text size to container width must match the screenshot. Before answering, compare your root's width:height with the image and correct it.
-10. If the image holds several components, rebuild the main one, the largest or most central. If it is not a UI component, return an empty "html" and say so in "note".
+10. Write out every element in full. A list, table or tree with twelve rows is twelve complete row elements, each with its own text, checkbox, arrow and count. Never use placeholders, templates, shorthand, loops or tokens such as ROWS, ROW_1, {{item}} or "...", never leave a container empty that shows content in the image, and never write a row as one string of codes. Everything you return is pasted as it is.
+11. If the image holds several components, rebuild the main one, the largest or most central. If it is not a UI component, return an empty "html" and say so in "note".
 
 Match the screenshot as closely as you can: spacing, alignment, sizes, radii and colours.`;
 
@@ -27,6 +28,12 @@ You get the original screenshot, then (when available) a render of the current H
 
 /** Added to the system prompt when an existing result is changed by an instruction. */
 export const MIMIC_EDIT = `You are now editing an existing component by instruction. You get the current HTML, and sometimes the original screenshot as a reference. Change only what the instruction asks for and keep everything else exactly as it is: structure, data-layer names, text, sizes and colours. Follow all the rules above, and return the full component in the same JSON shape. In "note", say in one short sentence what you changed.`;
+
+/** True when the model left a template or shorthand token where real content belongs (e.g. "ROWS", "ROW_D_Spot_110"). */
+export function hasPlaceholders(html: string): boolean {
+  const text = html.replace(/<[^>]*>/g, " ");
+  return /\bROWS?\b|\bROW_[A-Za-z0-9]|\{\{|\}\}|\$\{|\[\[|\.\.\.\s*$/m.test(text);
+}
 
 export const MIMIC_SCHEMA = {
   type: "object",
