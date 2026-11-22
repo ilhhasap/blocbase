@@ -5122,3 +5122,97 @@ button.free-ghost {
   font-size: 12px;
   color: var(--muted, #8a8a8a);
 }
+
+/* Account menu: groups with dividers, a saved shortcut next to the avatar, and the grid size switch. */
+.acct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acct-menu {
+  top: 48px;
+}
+
+.saved-btn {
+  position: relative;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.46);
+  color: var(--color-ink);
+}
+
+.saved-btn i {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font: 600 10.5px/18px var(--font-sans);
+  text-align: center;
+}
+
+.acct-sep {
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.acct-menu > a {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 14px;
+  color: var(--color-ink);
+  font: 500 14px/1 var(--font-sans);
+  text-decoration: none;
+}
+
+.acct-menu > a:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.acct-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 4px 0 12px;
+  color: var(--color-ink);
+  font: 500 14px/1 var(--font-sans);
+}
+
+.acct-seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.acct-seg button {
+  min-width: 36px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-sub);
+  font: 600 12px/1 var(--font-sans);
+  letter-spacing: 1px;
+}
+
+.acct-seg button[data-on="true"] {
+  background: #fff;
+  color: var(--color-ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}

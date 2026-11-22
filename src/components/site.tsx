@@ -1,3 +1,4 @@
+import { evenBorderColors } from "@/lib/figma-border";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
@@ -98,18 +99,11 @@ function foldPlaceholders(root: Element) {
  * Every side gets the colour of a side that really has a border.
  */
 function fixBorderColors(root: Element) {
-  const sides = ["Top", "Right", "Bottom", "Left"] as const;
   for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
-    if (!(el instanceof HTMLElement)) continue;
-    const style = el.style;
-    const real = sides.find(
-      (side) =>
-        parseFloat(style.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0 &&
-        style.getPropertyValue(`border-${side.toLowerCase()}-style`) !== "none",
-    );
-    const color = real && style.getPropertyValue(`border-${real.toLowerCase()}-color`);
-    if (!color) continue;
-    for (const side of sides) style.setProperty(`border-${side.toLowerCase()}-color`, color);
+    const attr = el.getAttribute("style");
+    if (!attr) continue;
+    const fixed = evenBorderColors(attr);
+    if (fixed !== attr) el.setAttribute("style", fixed);
   }
 }
 
@@ -266,6 +260,23 @@ export function Site() {
   const [sort, setSort] = useState<SortMode>("featured");
   const [counts, setCounts] = useState<Popularity | null>(null);
   const [cols, setCols] = useState(3);
+  // The most columns the wall may use, picked in the account menu (2 = roomier cards, 3 = more at once).
+  const [maxCols, setMaxCols] = useState<2 | 3>(3);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem("block-supply-grid") === "2") setMaxCols(2);
+    } catch {
+      /* storage can be blocked */
+    }
+  }, []);
+  const pickGrid = (value: 2 | 3) => {
+    setMaxCols(value);
+    try {
+      window.localStorage.setItem("block-supply-grid", String(value));
+    } catch {
+      /* storage can be blocked */
+    }
+  };
   const [saved, setSaved] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   // The last message stays on screen while the toast fades out.
@@ -428,7 +439,7 @@ export function Site() {
     if (onlySaved && saved.length === 0) setOnlySaved(false);
   }, [onlySaved, saved.length]);
 
-  const wallCols = group === "Sections" && !query.trim() ? Math.min(cols, 2) : cols;
+  const wallCols = Math.min(maxCols, group === "Sections" && !query.trim() ? Math.min(cols, 2) : cols);
   const packed = useMemo(() => pack(filtered, wallCols), [filtered, wallCols]);
 
   function goLibrary() {
@@ -650,6 +661,9 @@ export function Site() {
           <AuthSlot
             onLogin={() => setAuth({ mode: "login" })}
             savedCount={saved.length}
+            gridCols={maxCols}
+            onGrid={pickGrid}
+            showGrid={!ownPage && cols > 1}
             onSaved={() => {
               setOnlySaved(true);
               if (ownPage) void navigate({ to: "/{-$page}", params: { page: undefined } });
@@ -1061,7 +1075,21 @@ function FreePage({ onBrowse, signedIn, onSignup }: { onBrowse: () => void; sign
   );
 }
 
-function AuthSlot({ savedCount, onSaved, onLogin }: { savedCount: number; onSaved: () => void; onLogin: () => void }) {
+function AuthSlot({
+  savedCount,
+  onSaved,
+  onLogin,
+  gridCols,
+  onGrid,
+  showGrid,
+}: {
+  savedCount: number;
+  onSaved: () => void;
+  onLogin: () => void;
+  gridCols: 2 | 3;
+  onGrid: (value: 2 | 3) => void;
+  showGrid: boolean;
+}) {
   const { user, isPending } = useCurrentUserState();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -1095,6 +1123,12 @@ function AuthSlot({ savedCount, onSaved, onLogin }: { savedCount: number; onSave
   const label = user.displayName ?? user.primaryEmail ?? "Account";
   return (
     <div className="acct" ref={rootRef}>
+      <button type="button" className="saved-btn" aria-label={`Saved blocks (${savedCount})`} data-tip="Saved" onClick={onSaved}>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 2.5h8a.5.5 0 0 1 .5.5v10.2a.3.3 0 0 1-.48.24L8 10.9l-4.02 2.54a.3.3 0 0 1-.48-.24V3a.5.5 0 0 1 .5-.5Z" fill="currentColor" />
+        </svg>
+        {savedCount > 0 ? <i>{savedCount > 99 ? "99+" : savedCount}</i> : null}
+      </button>
       <button
         type="button"
         className="acct-btn"
@@ -1115,6 +1149,7 @@ function AuthSlot({ savedCount, onSaved, onLogin }: { savedCount: number; onSave
             <b>{label}</b>
             {user.primaryEmail && user.primaryEmail !== label ? <small>{user.primaryEmail}</small> : null}
           </div>
+          <div className="acct-sep" role="separator" />
           <button
             type="button"
             role="menuitem"
@@ -1125,22 +1160,52 @@ function AuthSlot({ savedCount, onSaved, onLogin }: { savedCount: number; onSave
           >
             Saved ({savedCount})
           </button>
+          <Link to="/{-$page}" params={{ page: "pricing" }} role="menuitem" onClick={() => setOpen(false)}>
+            Pricing
+          </Link>
+          {showGrid ? (
+            <>
+              <div className="acct-sep" role="separator" />
+              <div className="acct-row">
+                <span id="grid-size-label">Grid size</span>
+                <div className="acct-seg" role="radiogroup" aria-labelledby="grid-size-label">
+                  {([2, 3] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={gridCols === value}
+                      aria-label={`${value} columns`}
+                      data-on={gridCols === value ? "true" : "false"}
+                      onClick={() => onGrid(value)}
+                    >
+                      {"I".repeat(value)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
           {authEnabled ? (
-            <button
-              type="button"
-              role="menuitem"
-              disabled={signingOut}
-              onClick={() => {
-                setSigningOut(true);
-                void signOut().catch(() => setSigningOut(false));
-              }}
-            >
-              {signingOut ? "Signing out…" : "Sign out"}
-            </button>
+            <>
+              <div className="acct-sep" role="separator" />
+              <button
+                type="button"
+                role="menuitem"
+                disabled={signingOut}
+                onClick={() => {
+                  setSigningOut(true);
+                  void signOut().catch(() => setSigningOut(false));
+                }}
+              >
+                {signingOut ? "Signing out…" : "Sign out"}
+              </button>
+            </>
           ) : null}
         </div>
       ) : null}
     </div>
   );
 }
+
 
