@@ -245,17 +245,18 @@ export function Site() {
   const { page: pageParam, id: blockParam } = useParams({ strict: false }) as { page?: string; id?: string };
   const editing = BLOCKS.some((block) => block.id === blockParam) ? (blockParam ?? null) : null;
   const editingGroup = editing ? groupOf(BLOCKS.find((block) => block.id === editing)!.cat) : null;
-  const page: "components" | "sections" | "pricing" | "mimic" =
+  const page: "components" | "sections" | "pricing" | "mimic" | "saved" =
     editingGroup === "Sections"
       ? "sections"
       : editingGroup
         ? "components"
-        : pageParam === "sections" || pageParam === "pricing" || pageParam === "mimic"
+        : pageParam === "sections" || pageParam === "pricing" || pageParam === "mimic" || pageParam === "saved"
           ? pageParam
           : "components";
   const group: Group = page === "sections" ? "Sections" : "Components";
   // Pages that are not a block library: no group tab is active on them.
-  const ownPage = page === "pricing" || page === "mimic";
+  const savedPage = page === "saved";
+  const ownPage = page === "pricing" || page === "mimic" || savedPage;
   const [cat, setCat] = useState<Category | null>(null);
   const [sort, setSort] = useState<SortMode>("featured");
   const [counts, setCounts] = useState<Popularity | null>(null);
@@ -284,7 +285,6 @@ export function Site() {
   if (toast) lastToast.current = toast;
   const [copied, setCopied] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [onlySaved, setOnlySaved] = useState(false);
   const findRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user: currentUser, isPending: authPending } = useCurrentUserState();
@@ -321,7 +321,6 @@ export function Site() {
     if (authPending) return;
     if (!userId) {
       setSaved([]);
-      setOnlySaved(false);
       return;
     }
     let cancelled = false;
@@ -421,9 +420,9 @@ export function Site() {
     const q = query.trim().toLowerCase();
     return sortBlocks(BLOCKS, sort, counts).filter((block) => {
       // A search looks through everything; otherwise only the chosen group.
+      if (savedPage) return saved.includes(block.id) && (!q || block.name.toLowerCase().includes(q));
       if (!q && groupOf(block.cat) !== group) return false;
       if (cat && block.cat !== cat) return false;
-      if (onlySaved && !saved.includes(block.id)) return false;
       if (!q) return true;
       return (
         block.name.toLowerCase().includes(q) ||
@@ -431,15 +430,10 @@ export function Site() {
         block.id.includes(q)
       );
     });
-  }, [query, group, cat, onlySaved, saved, sort, counts]);
+  }, [query, group, cat, savedPage, saved, sort, counts]);
 
   // Sections are wide layouts, so they get at most two columns; a search mixes groups and keeps the usual grid.
-  // Nothing left to show in Saved (the last one was unsaved): go back to browsing everything.
-  useEffect(() => {
-    if (onlySaved && saved.length === 0) setOnlySaved(false);
-  }, [onlySaved, saved.length]);
-
-  const wallCols = group === "Sections" && !query.trim() ? Math.min(cols, 2) : cols;
+  const wallCols = group === "Sections" && !query.trim() && !savedPage ? Math.min(cols, 2) : cols;
   const packed = useMemo(() => pack(filtered, wallCols), [filtered, wallCols]);
 
   const renderCard = (block: Block) => (
@@ -634,7 +628,6 @@ export function Site() {
             className="logo"
             aria-label="Block Supply home"
             onClick={() => {
-              setOnlySaved(false);
               setQuery("");
             }}
           >
@@ -656,7 +649,6 @@ export function Site() {
                 data-on={!ownPage && group === name ? "true" : "false"}
                 aria-current={!ownPage && group === name ? "page" : undefined}
                 onClick={() => {
-                  setOnlySaved(false);
                   setQuery("");
                 }}
               >
@@ -670,7 +662,6 @@ export function Site() {
               data-on={page === "mimic" ? "true" : "false"}
               aria-current={page === "mimic" ? "page" : undefined}
               onClick={() => {
-                setOnlySaved(false);
                 setQuery("");
               }}
             >
@@ -719,12 +710,8 @@ export function Site() {
             savedCount={saved.length}
             layout={layout}
             onLayout={pickLayout}
-            showLayout={!ownPage}
-            onSaved={() => {
-              setOnlySaved(true);
-              if (ownPage) void navigate({ to: "/{-$page}", params: { page: undefined } });
-              scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+            showLayout={!ownPage || savedPage}
+            onSaved={() => void navigate({ to: "/{-$page}", params: { page: "saved" } })}
           />
           {!currentUser && !authPending ? (
             <Link to="/{-$page}" params={{ page: "pricing" }} className="join">
@@ -756,75 +743,81 @@ export function Site() {
             <MimicPage signedIn={Boolean(currentUser)} userId={currentUser?.id ?? null} pending={authPending} onLogin={() => setAuth({ mode: "login" })} onCopy={(block, kit) => void onCopy(block, kit)} onNotify={setToast} busy={busy} copied={copied} />
           ) : (
             <>
+              {savedPage ? (
+                <header className="hero hero-saved">
+                  <h1 className="hero-head">Saved</h1>
+                  <p className="hero-sub">
+                    {saved.length === 0
+                      ? "Blocks you save show up here."
+                      : `${saved.length} saved ${saved.length === 1 ? "block" : "blocks"}, kept ${currentUser ? "on your account" : "in this browser"}.`}
+                  </p>
+                </header>
+              ) : (
               <header className="hero">
-                <div className="hero-dots" aria-hidden="true" />
-                <span className="hero-pill">
-                  {currentUser ? "Unlimited copies, free" : `First ${FREE_COPIES} blocks free, no account`}
-                </span>
-                <h1 className="hero-head">Editable UI Components</h1>
-                <p className="hero-sub">
-                  A library of <b>editable UI blocks</b>. Copy one and paste it into Figma as{" "}
-                  <b>auto layout</b>, play with <b>Geist</b>.
-                </p>
-                <button
-                  type="button"
-                  className="hero-join"
-                  onClick={() => document.getElementById("library")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Explore blocks
-                </button>
-              </header>
+                  <div className="hero-dots" aria-hidden="true" />
+                  <span className="hero-pill">
+                    {currentUser ? "Unlimited copies, free" : `First ${FREE_COPIES} blocks free, no account`}
+                  </span>
+                  <h1 className="hero-head">Editable UI Components</h1>
+                  <p className="hero-sub">
+                    A library of <b>editable UI blocks</b>. Copy one and paste it into Figma as{" "}
+                    <b>auto layout</b>, play with <b>Geist</b>.
+                  </p>
+                  <button
+                    type="button"
+                    className="hero-join"
+                    onClick={() => document.getElementById("library")?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    Explore blocks
+                  </button>
+                </header>
+              )}
 
               <div className="bar-wrap">
               <div className="bar" role="toolbar" aria-label="Filter by kind">
-                {GROUP_CATEGORIES[group].map((name) => (
+                {(savedPage ? [] : GROUP_CATEGORIES[group]).map((name) => (
                   <button
                     key={name}
                     type="button"
                     className="chip"
                     data-on={cat === name ? "true" : "false"}
                     onClick={() => {
-                      // Saved and a category are separate filters; picking a category leaves Saved.
-                      setOnlySaved(false);
                       setCat((curr) => (curr === name ? null : name));
                     }}
                   >
                     {name}
                   </button>
                 ))}
-                {saved.length > 0 || onlySaved ? (
-                  <button
-                    type="button"
-                    className="chip"
-                    data-on={onlySaved ? "true" : "false"}
-                    onClick={() => {
-                      setCat(null);
-                      setOnlySaved((on) => !on);
-                    }}
-                  >
-                    Saved ({saved.length})
-                  </button>
-                ) : null}
               </div>
               <SortMenu value={sort} onChange={chooseSort} />
               </div>
 
               {filtered.length === 0 ? (
                 <div className="empty" id="library">
-                  <p>No blocks match that.</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery("");
-                      setCat(null);
-                      setOnlySaved(false);
-                    }}
-                  >
-                    Clear filters
-                  </button>
+                  {savedPage && saved.length === 0 ? (
+                    <>
+                      <p>Nothing saved yet. Tap the bookmark on a block to keep it here.</p>
+                      <button type="button" onClick={goLibrary}>
+                        Browse blocks
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p>No blocks match that.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuery("");
+                          setCat(null);
+                        }}
+                      >
+                        Clear filters
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
-                <div className="wall" id="library" data-layout={layout} data-kind={group === "Sections" ? "wide" : "tile"}>
+                <div className="wall" id="library" data-layout={layout} data-kind={group === "Sections" && !savedPage ? "wide" : "tile"}>
                   {layout === "grid"
                     ? filtered.map(renderCard)
                     : packed.map((column, index) => (
@@ -835,7 +828,7 @@ export function Site() {
                 </div>
               )}
 
-              <Questions />
+              {savedPage ? null : <Questions />}
             </>
           )}
         </div>

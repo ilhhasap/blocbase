@@ -5261,3 +5261,12 @@ button.free-ghost {
 .acct-seg svg {
   display: block;
 }
+
+/* The Saved page: a short header instead of the library hero. */
+.hero-saved {
+  padding: 28px 0 28px;
+}
+
+.hero-saved .hero-head {
+  margin-top: 0;
+}
