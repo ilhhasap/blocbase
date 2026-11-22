@@ -20,6 +20,7 @@ import type { MimicStatus } from "@/lib/mimic.server";
 import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
 import { describeFacts, dominantColors } from "@/lib/mimic-facts";
+import { loadShot, pruneShots, saveShot } from "@/lib/mimic-shots";
 import {
   DEFAULT_MIMIC_MODEL,
   MIMIC_MODELS,
@@ -1061,6 +1062,10 @@ function MimicTool({
   sizesRef.current = sizes;
   /** The shrunk screenshot of each board row, kept in memory so a Mimic node can run again. */
   const prepared = useRef(new Map<string, Promise<Prepared>>());
+  /** Bumped when pictures come back from the browser's storage, so Clone is enabled again. */
+  const [, setShotTick] = useState(0);
+  /** Pictures already written to storage, so each is written once. */
+  const savedShots = useRef(new WeakSet<Promise<Prepared>>());
 
   const storeKey = userId ? `${STORE_KEY}:${userId}` : null;
   /** Record the board as one undo step when it differs from the last one. */
@@ -1191,7 +1196,38 @@ function MimicTool({
       /* storage can be blocked */
     }
     setLoaded(true);
+    // The pictures are not in localStorage: bring back the ones kept in IndexedDB so Clone again still works.
+    const ids = (guest.length ? [...guest, ...saved.flows] : saved.flows).map(
+      (flow) => flow.id,
+    );
+    void Promise.all(
+      ids.map(async (id) => {
+        if (prepared.current.has(id)) return;
+        const shot = (await loadShot(`${storeKey}|${id}`)) as Prepared | null;
+        if (!shot || typeof shot.image !== "string" || lastKey.current !== storeKey)
+          return;
+        const job = Promise.resolve(shot);
+        savedShots.current.add(job);
+        prepared.current.set(id, job);
+      }),
+    ).then(() => setShotTick((tick) => tick + 1));
   }, [pending, storeKey]);
+
+  // Keep the picture of every row that has a result, and drop the pictures of rows that are gone.
+  useEffect(() => {
+    if (!loaded || !storeKey) return;
+    const keep = new Set<string>();
+    for (const flow of flows.slice(0, KEEP)) {
+      if (!flow.runs.some((run) => run.result)) continue;
+      keep.add(flow.id);
+      const job = prepared.current.get(flow.id);
+      if (job && !savedShots.current.has(job)) {
+        savedShots.current.add(job);
+        void job.then((shot) => saveShot(`${storeKey}|${flow.id}`, shot)).catch(() => {});
+      }
+    }
+    void pruneShots(`${storeKey}|`, keep);
+  }, [flows, loaded, storeKey]);
 
   useEffect(() => {
     if (!loaded || !storeKey) return;
