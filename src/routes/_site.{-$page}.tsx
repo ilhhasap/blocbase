@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-/** `/` is the component library; `/sections`, `/pricing` and `/mimic` are the other pages. */
-const PAGES = ["sections", "pricing", "mimic"];
+/** `/` is the component library; `/sections`, `/pricing`, `/mimic` and `/saved` are the other pages. */
+const PAGES = ["sections", "pricing", "mimic", "saved"];
 
 const TITLES: Record<string, { title: string; description: string }> = {
   sections: {
@@ -11,6 +11,10 @@ const TITLES: Record<string, { title: string; description: string }> = {
   mimic: {
     title: "Mimic — Block Supply",
     description: "Upload a screenshot of a component and get it back as an editable block you can paste into Figma. Coming soon.",
+  },
+  saved: {
+    title: "Saved — Block Supply",
+    description: "The blocks you saved.",
   },
   pricing: {
     title: "Pricing — Block Supply",
@@ -31,6 +35,7 @@ export const Route = createFileRoute("/_site/{-$page}")({
         { name: "description", content: page.description },
         { property: "og:title", content: page.title },
         { property: "og:description", content: page.description },
+        ...(params.page === "saved" ? [{ name: "robots", content: "noindex" }] : []),
       ],
     };
   },
