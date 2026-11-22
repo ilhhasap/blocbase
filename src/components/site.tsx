@@ -1164,7 +1164,7 @@ function AuthSlot({
             <>
               <div className="acct-sep" role="separator" />
               <div className="acct-row">
-                <span id="layout-label">Layout</span>
+                <span id="layout-label">Grid</span>
                 <div className="acct-seg" role="radiogroup" aria-labelledby="layout-label">
                   <button
                     type="button"
