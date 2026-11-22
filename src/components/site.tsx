@@ -1,3 +1,4 @@
+import { evenBorderColors } from "@/lib/figma-border";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
@@ -98,18 +99,11 @@ function foldPlaceholders(root: Element) {
  * Every side gets the colour of a side that really has a border.
  */
 function fixBorderColors(root: Element) {
-  const sides = ["Top", "Right", "Bottom", "Left"] as const;
   for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
-    if (!(el instanceof HTMLElement)) continue;
-    const style = el.style;
-    const real = sides.find(
-      (side) =>
-        parseFloat(style.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0 &&
-        style.getPropertyValue(`border-${side.toLowerCase()}-style`) !== "none",
-    );
-    const color = real && style.getPropertyValue(`border-${real.toLowerCase()}-color`);
-    if (!color) continue;
-    for (const side of sides) style.setProperty(`border-${side.toLowerCase()}-color`, color);
+    const attr = el.getAttribute("style");
+    if (!attr) continue;
+    const fixed = evenBorderColors(attr);
+    if (fixed !== attr) el.setAttribute("style", fixed);
   }
 }
 
@@ -1143,4 +1137,5 @@ function AuthSlot({ savedCount, onSaved, onLogin }: { savedCount: number; onSave
     </div>
   );
 }
+
 
