@@ -260,19 +260,19 @@ export function Site() {
   const [sort, setSort] = useState<SortMode>("featured");
   const [counts, setCounts] = useState<Popularity | null>(null);
   const [cols, setCols] = useState(3);
-  // The most columns the wall may use, picked in the account menu (2 = roomier cards, 3 = more at once).
-  const [maxCols, setMaxCols] = useState<2 | 3>(3);
+  // How the wall is laid out, picked in the account menu: masonry (Pinterest-like, natural heights) or a grid of equal tiles.
+  const [layout, setLayout] = useState<"masonry" | "grid">("masonry");
   useEffect(() => {
     try {
-      if (window.localStorage.getItem("block-supply-grid") === "2") setMaxCols(2);
+      if (window.localStorage.getItem("block-supply-layout") === "grid") setLayout("grid");
     } catch {
       /* storage can be blocked */
     }
   }, []);
-  const pickGrid = (value: 2 | 3) => {
-    setMaxCols(value);
+  const pickLayout = (value: "masonry" | "grid") => {
+    setLayout(value);
     try {
-      window.localStorage.setItem("block-supply-grid", String(value));
+      window.localStorage.setItem("block-supply-layout", value);
     } catch {
       /* storage can be blocked */
     }
@@ -439,8 +439,64 @@ export function Site() {
     if (onlySaved && saved.length === 0) setOnlySaved(false);
   }, [onlySaved, saved.length]);
 
-  const wallCols = Math.min(maxCols, group === "Sections" && !query.trim() ? Math.min(cols, 2) : cols);
+  const wallCols = group === "Sections" && !query.trim() ? Math.min(cols, 2) : cols;
   const packed = useMemo(() => pack(filtered, wallCols), [filtered, wallCols]);
+
+  const renderCard = (block: Block) => (
+      <article
+        key={block.id}
+        className="card"
+        id={`block-${block.id}`}
+        style={{ ["--h" as string]: `${block.h}px` }}
+        onClick={(event) => {
+          // Clicks on a live control interact with it; clicks elsewhere open the editor.
+          const target = event.target as HTMLElement;
+          if (isControlEvent(event.nativeEvent) || target.closest(".ix, [contenteditable], [role=slider], [role=textbox]")) return;
+          void navigate({ to: "/b/$id", params: { id: block.id } });
+        }}
+      >
+        {block.badge ? <span className="badge">{block.badge}</span> : null}
+        <button
+          type="button"
+          className="save"
+          data-on={saved.includes(block.id) ? "true" : "false"}
+          aria-label={saved.includes(block.id) ? `Unsave ${block.name}` : `Save ${block.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            requestSave(block.id);
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M4 2.5h8a1 1 0 0 1 1 1V14l-5-2.6L3 14V3.5a1 1 0 0 1 1-1Z"
+              fill={saved.includes(block.id) ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <div className="stage">
+          <BlockView id={block.id} />
+        </div>
+        <QcLayer blockId={block.id} blockName={block.name} where="card" />
+        <span className="cname">{block.name}</span>
+        <button
+          type="button"
+          className="copy"
+          data-on={copied === block.id ? "true" : "false"}
+          aria-label={`Copy ${block.name} to Figma`}
+          onClick={(event) => {
+            event.stopPropagation();
+            const kit = kitIn(event.currentTarget.closest("article"));
+            void onCopy(block, kit instanceof HTMLElement ? kit : null);
+          }}
+        >
+          <FigmaMark />
+          {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
+        </button>
+      </article>
+  );
 
   function goLibrary() {
     setCat(null);
@@ -661,9 +717,9 @@ export function Site() {
           <AuthSlot
             onLogin={() => setAuth({ mode: "login" })}
             savedCount={saved.length}
-            gridCols={maxCols}
-            onGrid={pickGrid}
-            showGrid={!ownPage && cols > 1}
+            layout={layout}
+            onLayout={pickLayout}
+            showLayout={!ownPage}
             onSaved={() => {
               setOnlySaved(true);
               if (ownPage) void navigate({ to: "/{-$page}", params: { page: undefined } });
@@ -768,66 +824,14 @@ export function Site() {
                   </button>
                 </div>
               ) : (
-                <div className="wall" id="library">
-                  {packed.map((column, index) => (
-                    <div className="col" key={index}>
-                      {column.map((block) => (
-                        <article
-                          key={block.id}
-                          className="card"
-                          id={`block-${block.id}`}
-                          style={{ ["--h" as string]: `${block.h}px` }}
-                          onClick={(event) => {
-                            // Clicks on a live control interact with it; clicks elsewhere open the editor.
-                            const target = event.target as HTMLElement;
-                            if (isControlEvent(event.nativeEvent) || target.closest(".ix, [contenteditable], [role=slider], [role=textbox]")) return;
-                            void navigate({ to: "/b/$id", params: { id: block.id } });
-                          }}
-                        >
-                          {block.badge ? <span className="badge">{block.badge}</span> : null}
-                          <button
-                            type="button"
-                            className="save"
-                            data-on={saved.includes(block.id) ? "true" : "false"}
-                            aria-label={saved.includes(block.id) ? `Unsave ${block.name}` : `Save ${block.name}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              requestSave(block.id);
-                            }}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-                              <path
-                                d="M4 2.5h8a1 1 0 0 1 1 1V14l-5-2.6L3 14V3.5a1 1 0 0 1 1-1Z"
-                                fill={saved.includes(block.id) ? "currentColor" : "none"}
-                                stroke="currentColor"
-                                strokeWidth="1.4"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </button>
-                          <div className="stage">
-                            <BlockView id={block.id} />
-                          </div>
-                          <QcLayer blockId={block.id} blockName={block.name} where="card" />
-                          <span className="cname">{block.name}</span>
-                          <button
-                            type="button"
-                            className="copy"
-                            data-on={copied === block.id ? "true" : "false"}
-                            aria-label={`Copy ${block.name} to Figma`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              const kit = kitIn(event.currentTarget.closest("article"));
-                              void onCopy(block, kit instanceof HTMLElement ? kit : null);
-                            }}
-                          >
-                            <FigmaMark />
-                            {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
-                          </button>
-                        </article>
+                <div className="wall" id="library" data-layout={layout} data-kind={group === "Sections" ? "wide" : "tile"}>
+                  {layout === "grid"
+                    ? filtered.map(renderCard)
+                    : packed.map((column, index) => (
+                        <div className="col" key={index}>
+                          {column.map(renderCard)}
+                        </div>
                       ))}
-                    </div>
-                  ))}
                 </div>
               )}
 
@@ -1079,16 +1083,16 @@ function AuthSlot({
   savedCount,
   onSaved,
   onLogin,
-  gridCols,
-  onGrid,
-  showGrid,
+  layout,
+  onLayout,
+  showLayout,
 }: {
   savedCount: number;
   onSaved: () => void;
   onLogin: () => void;
-  gridCols: 2 | 3;
-  onGrid: (value: 2 | 3) => void;
-  showGrid: boolean;
+  layout: "masonry" | "grid";
+  onLayout: (value: "masonry" | "grid") => void;
+  showLayout: boolean;
 }) {
   const { user, isPending } = useCurrentUserState();
   const [open, setOpen] = useState(false);
@@ -1163,25 +1167,44 @@ function AuthSlot({
           <Link to="/{-$page}" params={{ page: "pricing" }} role="menuitem" onClick={() => setOpen(false)}>
             Pricing
           </Link>
-          {showGrid ? (
+          {showLayout ? (
             <>
               <div className="acct-sep" role="separator" />
               <div className="acct-row">
-                <span id="grid-size-label">Grid size</span>
-                <div className="acct-seg" role="radiogroup" aria-labelledby="grid-size-label">
-                  {([2, 3] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={gridCols === value}
-                      aria-label={`${value} columns`}
-                      data-on={gridCols === value ? "true" : "false"}
-                      onClick={() => onGrid(value)}
-                    >
-                      {"I".repeat(value)}
-                    </button>
-                  ))}
+                <span id="layout-label">Layout</span>
+                <div className="acct-seg" role="radiogroup" aria-labelledby="layout-label">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={layout === "masonry"}
+                    aria-label="Masonry, like Pinterest"
+                    data-tip="Masonry"
+                    data-on={layout === "masonry" ? "true" : "false"}
+                    onClick={() => onLayout("masonry")}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                      <rect x="2" y="2" width="5" height="7" rx="1.2" fill="currentColor" />
+                      <rect x="9" y="2" width="5" height="4" rx="1.2" fill="currentColor" />
+                      <rect x="2" y="11" width="5" height="3" rx="1.2" fill="currentColor" />
+                      <rect x="9" y="8" width="5" height="6" rx="1.2" fill="currentColor" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={layout === "grid"}
+                    aria-label="Grid of equal tiles"
+                    data-tip="Equal grid"
+                    data-on={layout === "grid" ? "true" : "false"}
+                    onClick={() => onLayout("grid")}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                      <rect x="2" y="2" width="5" height="5" rx="1.2" fill="currentColor" />
+                      <rect x="9" y="2" width="5" height="5" rx="1.2" fill="currentColor" />
+                      <rect x="2" y="9" width="5" height="5" rx="1.2" fill="currentColor" />
+                      <rect x="9" y="9" width="5" height="5" rx="1.2" fill="currentColor" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </>

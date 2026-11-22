@@ -26,7 +26,14 @@ function Fit({ minW, noShadow, children }: { minW?: number; noShadow?: boolean; 
       const avail = outerEl.clientWidth;
       // `offsetWidth` ignores the transform, so this is the block's real width.
       const natural = Math.max(minW ?? 0, kit?.offsetWidth ?? 0);
-      const scale = avail > 0 && natural > avail + 1 ? avail / natural : 1;
+      let scale = avail > 0 && natural > avail + 1 ? avail / natural : 1;
+      // In the equal-tile grid a card has a fixed height too, so a tall block is scaled down to fit it.
+      const stage = outerEl.closest<HTMLElement>('[data-layout="grid"] .stage');
+      if (stage && natural > 0 && innerEl.offsetHeight > 0) {
+        const style = getComputedStyle(stage);
+        const room = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        if (room > 0 && innerEl.offsetHeight > room) scale = Math.min(scale, room / innerEl.offsetHeight);
+      }
       const height = scale < 1 ? Math.round(innerEl.offsetHeight * scale) : 0;
       const width = scale < 1 ? natural : 0;
       setFit((prev) => (prev.scale === scale && prev.width === width && prev.height === height ? prev : { scale, width, height }));
@@ -42,21 +49,28 @@ function Fit({ minW, noShadow, children }: { minW?: number; noShadow?: boolean; 
 
   const scaled = fit.scale < 1;
   return (
-    <div ref={outer} data-fit="" style={{ width: "100%", height: scaled ? fit.height : undefined }}>
-      <div
-        ref={inner}
-        data-fit-inner=""
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          width: scaled ? fit.width : "100%",
-          transform: scaled ? `scale(${fit.scale})` : undefined,
-          transformOrigin: "top left",
-        }}
-      >
-        <ShadowHost noShadow={noShadow} onReady={() => setReady(true)}>
-          {children}
-        </ShadowHost>
+    <div
+      ref={outer}
+      data-fit=""
+      style={{ width: "100%", height: scaled ? fit.height : undefined, display: scaled ? "flex" : undefined, justifyContent: "center" }}
+    >
+      {/* Centres a block that is scaled down more than its width needs (the equal-tile grid). */}
+      <div style={{ width: scaled ? Math.round(fit.width * fit.scale) : "100%", height: scaled ? fit.height : undefined, flex: "none" }}>
+        <div
+          ref={inner}
+          data-fit-inner=""
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            width: scaled ? fit.width : "100%",
+            transform: scaled ? `scale(${fit.scale})` : undefined,
+            transformOrigin: "top left",
+          }}
+        >
+          <ShadowHost noShadow={noShadow} onReady={() => setReady(true)}>
+            {children}
+          </ShadowHost>
+        </div>
       </div>
     </div>
   );
