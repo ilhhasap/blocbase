@@ -757,10 +757,13 @@ export function Site() {
               ) : (
               <header className="hero">
                   <div className="hero-dots" aria-hidden="true" />
-                  <h1 className="hero-head">Editable UI Components</h1>
+                  <h1 className="hero-head">
+                    Copy a UI block.
+                    <br />
+                    Paste it into Figma.
+                  </h1>
                   <p className="hero-sub">
-                    A library of <b>editable UI blocks</b>. Copy one and paste it into Figma as{" "}
-                    <b>auto layout</b>, play with <b>Geist</b>.
+                    Free, <b>editable blocks</b> that paste into Figma as real <b>auto layout</b>.
                   </p>
                   <button
                     type="button"
