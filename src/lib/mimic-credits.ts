@@ -39,10 +39,3 @@ export function creditsFor(model: string | null | undefined, tokens: Tokens): nu
     1_000_000;
   return Math.max(1, Math.ceil(dollars / CREDIT_USD));
 }
-
-/** A credit balance for a small space: 974, 1k. */
-export function shortCredits(value: number): string {
-  if (value >= 10_000) return `${Math.round(value / 1000)}k`;
-  if (value >= 1000) return `${(Math.round(value / 100) / 10).toString().replace(/\.0$/, "")}k`;
-  return String(Math.max(0, Math.round(value)));
-}

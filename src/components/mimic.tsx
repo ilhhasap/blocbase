@@ -21,7 +21,6 @@ import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
 import { describeFacts, dominantColors } from "@/lib/mimic-facts";
 import { loadShot, pruneShots, saveShot } from "@/lib/mimic-shots";
-import { shortCredits } from "@/lib/mimic-credits";
 import {
   DEFAULT_MIMIC_MODEL,
   MIMIC_MODELS,
@@ -2582,33 +2581,16 @@ function MimicTool({
         <div className="mimic-usage">
           <button
             type="button"
-            className="mimic-ring"
+            className="mimic-pill"
             aria-label={`${left} of ${status.limit} Claude credits left`}
-            title={`Claude: ${left} of ${status.limit} credits left in this 5-hour window`}
           >
-            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-              <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="mimic-ring-track" />
-              <circle
-                cx="18"
-                cy="18"
-                r="14"
-                fill="none"
-                strokeWidth="4"
-                strokeLinecap="round"
-                className="mimic-ring-fill"
-                data-empty={(left ?? 0) <= 0 ? "true" : "false"}
-                strokeDasharray={`${(Math.min(1, (left ?? 0) / Math.max(1, status.limit)) * 2 * Math.PI * 14).toFixed(2)} 100`}
-                transform="rotate(-90 18 18)"
-              />
-            </svg>
-            <span className="mimic-ring-n">{shortCredits(left ?? 0)}</span>
+            <ClaudeMark />
+            <span>{`${(left ?? 0).toLocaleString("en-US")} / ${status.limit.toLocaleString("en-US")}`}</span>
           </button>
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
-              <span className="mimic-quota-name">
-                <ClaudeMark /> Claude
-              </span>
-              <span>{`${(left ?? 0).toLocaleString("en-US")} / ${status.limit.toLocaleString("en-US")}`}</span>
+              <span className="mimic-quota-name">Claude credits</span>
+              <span>{`${Math.round((Math.max(0, status.limit - status.used) / Math.max(1, status.limit)) * 100)}% left`}</span>
             </div>
             <div
               className="mimic-quota-track"
