@@ -1,4 +1,5 @@
 import { evenBorderColors } from "@/lib/figma-border";
+import { HeroField } from "@/components/hero-field";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
@@ -743,6 +744,7 @@ export function Site() {
             <MimicPage signedIn={Boolean(currentUser)} userId={currentUser?.id ?? null} pending={authPending} onLogin={() => setAuth({ mode: "login" })} onCopy={(block, kit) => void onCopy(block, kit)} onNotify={setToast} busy={busy} copied={copied} />
           ) : (
             <>
+              {savedPage ? null : <HeroField />}
               {savedPage ? (
                 <header className="hero hero-saved">
                   <h1 className="hero-head">Saved</h1>

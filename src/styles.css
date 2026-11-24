@@ -5299,3 +5299,52 @@ button.free-ghost {
     animation: none !important;
   }
 }
+
+/* Library hero: the heading is Geist Serif at details.so's size, over a field of auto layout words. */
+@font-face {
+  font-family: "Geist Serif";
+  src: url("/fonts/geist-serif.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.hero-head {
+  font-family: "Geist Serif", Georgia, "Times New Roman", serif;
+  font-size: clamp(40px, 2.5rem + 1vw, 54px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.body:not(.body-canvas) {
+  position: relative;
+}
+
+.hero-field {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 600px;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 50%, transparent);
+  mask-image: linear-gradient(#000 50%, transparent);
+}
+
+.hero-field canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 760px) {
+  .hero-field {
+    height: 440px;
+  }
+
+  .hero-head {
+    font-size: 38px;
+  }
+}
