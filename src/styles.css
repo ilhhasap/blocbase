@@ -4967,26 +4967,8 @@ button.free-ghost {
   bottom: 24px;
 }
 
-.mimic-ring {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(23, 24, 26, 0.08), 0 6px 18px rgba(23, 24, 26, 0.1);
-  cursor: default;
-}
 
-.mimic-ring-track {
-  stroke: rgba(23, 24, 26, 0.1);
-}
 
-.mimic-ring-fill {
-  stroke: #17181a;
-  transition: stroke-dasharray 0.3s ease;
-}
 
 .mimic-pop {
   position: absolute;
@@ -5018,26 +5000,9 @@ button.free-ghost {
   }
 }
 
-.mimic-ring-fill[data-empty="true"] {
-  opacity: 0;
-}
 
-.mimic-ring {
-  position: relative;
-}
 
-.mimic-ring svg {
-  position: absolute;
-  inset: 4px;
-}
 
-.mimic-ring-n {
-  position: relative;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
-  color: #17181a;
-}
 
 .mimic-quota-name {
   display: inline-flex;
@@ -5050,20 +5015,8 @@ button.free-ghost {
   height: 14px;
 }
 
-.mimic-ring {
-  width: 36px;
-  height: 36px;
-}
 
-.mimic-ring svg {
-  inset: 2px;
-  width: 32px;
-  height: 32px;
-}
 
-.mimic-ring-n {
-  font-size: 12px;
-}
 
 /* The controls under a block float below it and show on hover, so they take no room of their own. */
 .mimic-out .mimic-edit {
@@ -5269,4 +5222,50 @@ button.free-ghost {
 
 .hero-saved .hero-head {
   margin-top: 0;
+}
+
+/* The credit balance as a small pill, bottom right; the details open on hover. */
+.mimic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(23, 24, 26, 0.08), 0 6px 18px rgba(23, 24, 26, 0.1);
+  color: #17181a;
+  font: 500 13px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Page transitions: the page cross-fades while the navbar stays where it is (like details.so). */
+.top {
+  view-transition-name: site-nav;
+}
+
+.scroll {
+  view-transition-name: site-page;
+}
+
+::view-transition-group(site-page) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+::view-transition-old(site-page),
+::view-transition-new(site-page) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
