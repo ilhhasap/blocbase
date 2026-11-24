@@ -5422,3 +5422,35 @@ body {
 .chip:hover {
   background: #eaecef;
 }
+
+/* Fewer shadows: surfaces are flat; only menus and toasts, which float above the page, keep a soft one. */
+:root {
+  --glass-shadow: none;
+  --ink-glass: #17181a;
+}
+
+.hero-join,
+.join,
+.mark,
+.plan[data-on="true"],
+.ai-pill,
+.find,
+.find:focus-within,
+.hero-pill,
+.plan,
+.acct-btn,
+.saved-btn {
+  box-shadow: none;
+}
+
+.hero-join,
+.join,
+.mark {
+  border: 0;
+}
+
+.popover,
+.acct-menu,
+.toast {
+  box-shadow: 0 8px 24px rgba(23, 24, 26, 0.1);
+}
