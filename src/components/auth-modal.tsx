@@ -55,7 +55,7 @@ export function AuthModal({
       return;
     }
     setBusy(true);
-    const name = nextEmail.split("@")[0]?.slice(0, 32) || "Block Supply";
+    const name = nextEmail.split("@")[0]?.slice(0, 32) || "Bloc Supply";
     const result =
       mode === "signup"
         ? await authClient.signUp.email({ email: nextEmail, password, name, callbackURL: here })
