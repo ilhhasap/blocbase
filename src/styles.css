@@ -5317,7 +5317,7 @@ button.free-ghost {
   font-size: clamp(40px, 2.5rem + 1vw, 54px);
   font-weight: 500;
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  letter-spacing: -2px;
 }
 
 .body:not(.body-canvas) {
