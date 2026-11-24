@@ -5241,3 +5241,31 @@ button.free-ghost {
   white-space: nowrap;
   cursor: default;
 }
+
+/* Page transitions: the page cross-fades while the navbar stays where it is (like details.so). */
+.top {
+  view-transition-name: site-nav;
+}
+
+.scroll {
+  view-transition-name: site-page;
+}
+
+::view-transition-group(site-page) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+::view-transition-old(site-page),
+::view-transition-new(site-page) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
