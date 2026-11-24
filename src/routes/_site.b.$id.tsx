@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_site/b/$id")({
     const block = BLOCKS.find((item) => item.id === params.id);
     if (!block) return {};
     const kind = groupOf(block.cat) === "Sections" ? "section" : "component";
-    const title = `${block.name} — Block Supply`;
+    const title = `${block.name} — Bloc Supply`;
     const description = `${block.name}: a free ${block.cat.toLowerCase()} ${kind} for Figma. Tune it, copy it and paste it as auto layout.`;
     return {
       meta: [
