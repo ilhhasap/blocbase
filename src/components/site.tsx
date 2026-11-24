@@ -757,9 +757,6 @@ export function Site() {
               ) : (
               <header className="hero">
                   <div className="hero-dots" aria-hidden="true" />
-                  <span className="hero-pill">
-                    {currentUser ? "Unlimited copies, free" : `First ${FREE_COPIES} blocks free, no account`}
-                  </span>
                   <h1 className="hero-head">Editable UI Components</h1>
                   <p className="hero-sub">
                     A library of <b>editable UI blocks</b>. Copy one and paste it into Figma as{" "}
@@ -1004,7 +1001,6 @@ function FreePage({ onBrowse, signedIn, onSignup }: { onBrowse: () => void; sign
     <>
       <header className="hero free-hero">
         <div className="hero-dots" aria-hidden="true" />
-        <span className="hero-pill">{signedIn ? "You’re logged in · unlimited copies" : `Free · ${FREE_COPIES} copies without an account`}</span>
         <h1 className="hero-head">Free to use. Always.</h1>
         <p className="hero-sub">
           Every block is free to copy into Figma. {signedIn ? "Your account is free too, so copy as much as you like." : `After ${FREE_COPIES} copies, log in with a free account to keep copying.`}
