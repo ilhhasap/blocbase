@@ -5312,6 +5312,7 @@ button.free-ghost {
 
 /* Library hero: the heading at details.so's size, over a field of auto layout words. */
 .hero-head {
+  margin-top: 0;
   font-size: clamp(40px, 2.5rem + 1vw, 54px);
   font-weight: 500;
   line-height: 1.05;

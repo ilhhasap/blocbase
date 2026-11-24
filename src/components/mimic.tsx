@@ -141,7 +141,6 @@ function ComingSoon() {
         Upload a screenshot of a component and get it back as an editable block,
         ready to paste into Figma.
       </p>
-      <span className="hero-pill mimic-pill">Coming soon</span>
     </section>
   );
 }
