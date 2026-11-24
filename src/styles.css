@@ -5221,6 +5221,7 @@ button.free-ghost {
 }
 
 .hero-saved .hero-head {
+  max-width: none;
   margin-top: 0;
 }
 
