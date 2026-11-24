@@ -7,6 +7,7 @@ import {
   MIMIC_SYSTEM,
   hasPlaceholders,
 } from "@/lib/mimic-prompt";
+import { creditsFor, DEFAULT_CREDITS, DEFAULT_RUN_CREDITS } from "@/lib/mimic-credits";
 import {
   DEFAULT_MIMIC_MODEL,
   isMimicModel,
@@ -17,11 +18,8 @@ import {
 export const mimicEnabled = () => process.env.VITE_MIMIC_ENABLED === "true";
 
 const DEFAULT_MODEL = process.env.MIMIC_MODEL || DEFAULT_MIMIC_MODEL;
-/** Claude runs allowed per session. A session starts with a run and lasts 5 hours, like Claude's own limit. */
-const PER_SESSION = Math.max(
-  1,
-  Number(process.env.MIMIC_PER_SESSION ?? process.env.MIMIC_PER_DAY) || 3,
-);
+/** Credits per session. A session starts with a run and lasts 5 hours, like Claude's own limit; a run costs what its tokens cost. */
+const CREDITS = Math.max(1, Number(process.env.MIMIC_CREDITS) || DEFAULT_CREDITS);
 const SESSION_MS = 5 * 3600 * 1000;
 const MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 // Vercel refuses a request body over 4.5 MB, and a refine sends the screenshot and a render together.
@@ -79,8 +77,8 @@ async function hasPass(userId: string): Promise<boolean> {
  */
 async function currentSession(userId: string) {
   const sql = await getSql();
-  const rows = await sql.query<{ at: string }>(
-    `select created_at as at from mimic_runs
+  const rows = await sql.query<{ at: string; credits: number | null }>(
+    `select created_at as at, credits from mimic_runs
      where user_id = $1 and status <> 'failed' and created_at > now() - interval '3 days'
      order by created_at asc`,
     [userId],
@@ -89,10 +87,11 @@ async function currentSession(userId: string) {
   let used = 0;
   for (const row of rows) {
     const at = new Date(row.at);
+    const cost = row.credits ?? DEFAULT_RUN_CREDITS;
     if (!start || at.getTime() >= start.getTime() + SESSION_MS) {
       start = at;
-      used = 1;
-    } else used += 1;
+      used = cost;
+    } else used += cost;
   }
   if (start && start.getTime() + SESSION_MS <= Date.now()) return { start: null, used: 0 };
   return { start, used };
@@ -115,7 +114,7 @@ export async function getMimicStatus(userId: string): Promise<MimicStatus> {
     },
     mock: mockOn(),
     used,
-    limit: PER_SESSION,
+    limit: CREDITS,
     pass,
     resetsAt:
       !pass && start ? new Date(start.getTime() + SESSION_MS).toISOString() : null,
@@ -228,17 +227,17 @@ export async function generateMimic(
   const taken = await sql.query<{ id: string }>(
     `insert into mimic_runs (user_id, model)
      select $1, $2
-     where ($4::boolean or $5::timestamptz is null or (select count(*) from mimic_runs where user_id = $1 and status <> 'failed' and created_at >= $5::timestamptz) < $3)
+     where ($4::boolean or $5::timestamptz is null or (select coalesce(sum(coalesce(credits, $6)), 0) from mimic_runs where user_id = $1 and status <> 'failed' and created_at >= $5::timestamptz) < $3)
        and not exists (select 1 from mimic_runs where user_id = $1 and status = 'pending' and created_at > now() - interval '3 minutes')
      returning id`,
-    [userId, MODEL, PER_SESSION, pass, session.start?.toISOString() ?? null],
+    [userId, MODEL, CREDITS, pass, session.start?.toISOString() ?? null, DEFAULT_RUN_CREDITS],
   );
   const runId = taken[0]?.id;
   if (!runId) {
     const status = await getMimicStatus(userId);
     throw new Error(
-      status.used >= PER_SESSION
-        ? `You have used your ${PER_SESSION} Claude runs for this 5-hour session.`
+      status.used >= CREDITS
+        ? "You have used all your Claude credits for this 5-hour window."
         : "A generation is already running.",
     );
   }
@@ -246,15 +245,17 @@ export async function generateMimic(
   const finish = async (
     status: string,
     usage?: { input: number; output: number; cached: number },
+    credits?: number,
   ) =>
     sql.query(
-      "update mimic_runs set status = $2, input_tokens = $3, output_tokens = $4, cache_read_tokens = $5 where id = $1",
+      "update mimic_runs set status = $2, input_tokens = $3, output_tokens = $4, cache_read_tokens = $5, credits = $6 where id = $1",
       [
         runId,
         status,
         usage?.input ?? null,
         usage?.output ?? null,
         usage?.cached ?? null,
+        credits ?? null,
       ],
     );
 
@@ -267,7 +268,7 @@ export async function generateMimic(
         html: SAMPLE,
         note: "Mock mode.",
         used: 0,
-        limit: PER_SESSION,
+        limit: CREDITS,
       };
     }
 
@@ -378,7 +379,14 @@ export async function generateMimic(
         "That component is too detailed to rebuild. Try a simpler crop.",
       );
     }
-    await finish("done", usage);
+    // The cost of this run: its tokens at the price of the model that answered (a fallback model may have).
+    const cost = creditsFor(response.model ?? MODEL, {
+      input: usage.input,
+      output: usage.output,
+      cacheRead: usage.cached,
+      cacheWrite: response.usage.cache_creation_input_tokens ?? 0,
+    });
+    await finish("done", usage, cost);
     const status = await getMimicStatus(userId);
     return {
       name:

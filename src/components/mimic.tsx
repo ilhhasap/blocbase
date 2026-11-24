@@ -21,6 +21,7 @@ import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
 import { describeFacts, dominantColors } from "@/lib/mimic-facts";
 import { loadShot, pruneShots, saveShot } from "@/lib/mimic-shots";
+import { shortCredits } from "@/lib/mimic-credits";
 import {
   DEFAULT_MIMIC_MODEL,
   MIMIC_MODELS,
@@ -444,7 +445,7 @@ function blockWidth(html: string) {
 }
 
 const MODEL_GROUPS = [
-  { provider: "anthropic", label: "Claude", note: "Uses your 5-hour limit" },
+  { provider: "anthropic", label: "Claude", note: "Uses your credits" },
   {
     provider: "openrouter",
     label: "Free",
@@ -2203,7 +2204,7 @@ function MimicTool({
             const model = flow.model ?? defaultModel;
             const free = providerOf(model) === "openrouter";
             const busyFlow = flow.runs.some((run) => run.working);
-            const out = left === 0 && !free;
+            const out = (left ?? 1) <= 0 && !free;
             const noShot = !prepared.current.has(flow.id);
             const showTools = selected.includes(`img-${flow.id}`) || busyFlow;
             const canBuild =
@@ -2219,7 +2220,7 @@ function MimicTool({
                 : noShot
                   ? "The screenshot was not kept. Press Replace and add it again."
                   : out
-                    ? "No Claude runs left in this 5-hour window. Pick a free model to keep going."
+                    ? "No Claude credits left in this 5-hour window. Pick a free model to keep going."
                     : undefined;
             return (
               <Fragment key={flow.id}>
@@ -2582,8 +2583,8 @@ function MimicTool({
           <button
             type="button"
             className="mimic-ring"
-            aria-label={`${left} of ${status.limit} Claude runs left`}
-            title={`Claude: ${left} of ${status.limit} left in this 5-hour window`}
+            aria-label={`${left} of ${status.limit} Claude credits left`}
+            title={`Claude: ${left} of ${status.limit} credits left in this 5-hour window`}
           >
             <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
               <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="mimic-ring-track" />
@@ -2600,19 +2601,19 @@ function MimicTool({
                 transform="rotate(-90 18 18)"
               />
             </svg>
-            <span className="mimic-ring-n">{left}</span>
+            <span className="mimic-ring-n">{shortCredits(left ?? 0)}</span>
           </button>
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
               <span className="mimic-quota-name">
                 <ClaudeMark /> Claude
               </span>
-              <span>{`${left} of ${status.limit} left`}</span>
+              <span>{`${(left ?? 0).toLocaleString("en-US")} / ${status.limit.toLocaleString("en-US")}`}</span>
             </div>
             <div
               className="mimic-quota-track"
               role="progressbar"
-              aria-label="Claude runs used in this 5-hour window"
+              aria-label="Claude credits used in this 5-hour window"
               aria-valuemin={0}
               aria-valuemax={status.limit}
               aria-valuenow={Math.min(status.used, status.limit)}
