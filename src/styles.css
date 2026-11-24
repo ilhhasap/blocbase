@@ -5377,3 +5377,14 @@ body {
 .find:focus-within {
   background: #f1f3f6;
 }
+
+/* More room between the Explore blocks button and the filters below it. */
+.hero:not(.hero-saved):not(.free-hero) {
+  padding-bottom: 128px;
+}
+
+@media (max-width: 760px) {
+  .hero:not(.hero-saved):not(.free-hero) {
+    padding-bottom: 80px;
+  }
+}
