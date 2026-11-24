@@ -5310,17 +5310,8 @@ button.free-ghost {
   }
 }
 
-/* Library hero: the heading is Geist Serif at details.so's size, over a field of auto layout words. */
-@font-face {
-  font-family: "Geist Serif";
-  src: url("/fonts/geist-serif.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* Library hero: the heading at details.so's size, over a field of auto layout words. */
 .hero-head {
-  font-family: "Geist Serif", Georgia, "Times New Roman", serif;
   font-size: clamp(40px, 2.5rem + 1vw, 54px);
   font-weight: 500;
   line-height: 1.05;
