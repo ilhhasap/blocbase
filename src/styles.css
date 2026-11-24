@@ -5242,7 +5242,10 @@ button.free-ghost {
   cursor: default;
 }
 
-/* Page transitions: the page cross-fades while the navbar stays where it is (like details.so). */
+/* Page transitions, copied from details.so (measured on /inspo -> /vault): the new page sits above the old one
+   and fades in over 0.5s with ease-out-quad; the old page stays fully visible underneath until it is covered, and
+   the navbar does not move. The page layer gets the page's own background so the two pages never show through
+   each other while the fade runs. */
 .top {
   view-transition-name: site-nav;
 }
@@ -5251,15 +5254,42 @@ button.free-ghost {
   view-transition-name: site-page;
 }
 
+::view-transition-group(site-nav),
 ::view-transition-group(site-page) {
-  animation-duration: 0.5s;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: none;
 }
 
-::view-transition-old(site-page),
+::view-transition-group(site-page) {
+  background:
+    radial-gradient(760px 520px at 96% 108%, rgba(186, 228, 212, 0.72), rgba(0, 0, 0, 0) 52%),
+    rgb(231, 237, 243);
+}
+
+::view-transition-old(site-page) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 ::view-transition-new(site-page) {
-  animation-duration: 0.5s;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  mix-blend-mode: normal;
+  animation: site-page-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes site-page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+::view-transition-old(site-nav),
+::view-transition-new(site-nav),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {
