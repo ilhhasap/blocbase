@@ -5242,10 +5242,10 @@ button.free-ghost {
   cursor: default;
 }
 
-/* Page transitions, copied from details.so (measured on /inspo -> /vault): the new page sits above the old one
-   and fades in over 0.5s with ease-out-quad; the old page stays fully visible underneath until it is covered, and
-   the navbar does not move. The page layer gets the page's own background so the two pages never show through
-   each other while the fade runs. */
+/* Page transitions. details.so lets the new page fade in over the old one, which only looks clean because its pages
+   are opaque; ours are glass cards on a gradient, so the two pages showed through each other and the old navbar tab
+   stayed lit. Here the old page fades out first and the new one fades in just after (a fade-through, 0.5s in
+   all, ease-out-quad on the way in), and the navbar switches at once under it. */
 .top {
   view-transition-name: site-nav;
 }
@@ -5255,7 +5255,9 @@ button.free-ghost {
 }
 
 ::view-transition-group(site-nav),
-::view-transition-group(site-page) {
+::view-transition-group(site-page),
+::view-transition-old(root),
+::view-transition-new(root) {
   animation: none;
 }
 
@@ -5265,14 +5267,23 @@ button.free-ghost {
     rgb(231, 237, 243);
 }
 
-::view-transition-old(site-page) {
-  animation: none;
+::view-transition-old(site-page),
+::view-transition-new(site-page) {
   mix-blend-mode: normal;
 }
 
+::view-transition-old(site-page) {
+  animation: site-page-out 0.18s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
 ::view-transition-new(site-page) {
-  mix-blend-mode: normal;
-  animation: site-page-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: site-page-in 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.12s both;
+}
+
+@keyframes site-page-out {
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes site-page-in {
@@ -5284,10 +5295,11 @@ button.free-ghost {
   }
 }
 
-::view-transition-old(site-nav),
-::view-transition-new(site-nav),
-::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-old(site-nav) {
+  display: none;
+}
+
+::view-transition-new(site-nav) {
   animation: none;
   mix-blend-mode: normal;
 }
@@ -5334,6 +5346,8 @@ button.free-ghost {
 }
 
 .hero-field canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
