@@ -5389,3 +5389,36 @@ body {
     padding-bottom: 80px;
   }
 }
+
+/* Flat surfaces: no drop shadow, a light grey fill so cards and chips stand off the white page. */
+.card,
+.chip,
+.bar .chip,
+.copy,
+.badge,
+.cname {
+  box-shadow: none;
+}
+
+.card {
+  border-color: rgba(23, 24, 26, 0.06);
+  background: #f2f3f5;
+}
+
+.chip,
+.bar .chip {
+  border-color: rgba(23, 24, 26, 0.06);
+  background: #f2f3f5;
+}
+
+.chip[data-on="true"],
+.bar .chip[data-on="true"],
+.bar .chip[data-on="true"]:hover {
+  border-color: #17181a;
+  background: #17181a;
+  box-shadow: none;
+}
+
+.chip:hover {
+  background: #eaecef;
+}
