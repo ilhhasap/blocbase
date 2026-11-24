@@ -1,4 +1,4 @@
-# Block Supply
+# Bloc Supply
 
 Free SVG UI blocks you copy and paste into Figma as auto layout.
 

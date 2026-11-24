@@ -127,7 +127,7 @@ function Crate() {
       <div className="ft-front" aria-hidden="true">
         <span className="ft-strap" />
         <span className="ft-stamp">
-          Block Supply
+          Bloc Supply
           <small>{BLOCKS.length} UI blocks · this side up</small>
         </span>
       </div>
@@ -152,7 +152,7 @@ export function Footer() {
       <Crate />
       <div className="ft-meta">
         <div>
-          <strong>Block Supply</strong>
+          <strong>Bloc Supply</strong>
           <span>Free UI blocks you paste into Figma as auto layout.</span>
         </div>
         <nav aria-label="Social">
@@ -167,7 +167,7 @@ export function Footer() {
           </a>
         </nav>
       </div>
-      <p className="ft-legal">©{new Date().getFullYear()} Block Supply · Set in Geist</p>
+      <p className="ft-legal">©{new Date().getFullYear()} Bloc Supply · Set in Geist</p>
     </footer>
   );
 }

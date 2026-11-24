@@ -147,7 +147,7 @@ export function TiltCard() {
         ui={{ onPointerMove: onMove, onPointerLeave: () => setTilt({ x: 0, y: 0, active: false }) }}
       >
         <Txt size={13} weight={500} color={GREY_2}>
-          Block Supply
+          Bloc Supply
         </Txt>
         <Box layer="Body" dir="col" gap={2}>
           <Txt size={22} weight={600} color={PAPER}>
@@ -594,7 +594,7 @@ export function DynamicIsland() {
               </Txt>
               {open ? (
                 <Txt size={11} weight={400} color={GREY_2}>
-                  Block Supply Radio
+                  Bloc Supply Radio
                 </Txt>
               ) : null}
             </Box>
