@@ -757,20 +757,35 @@ export function Site() {
               ) : (
               <header className="hero">
                   <div className="hero-dots" aria-hidden="true" />
-                  <h1 className="hero-head">
-                    Copy a UI block.
-                    <br />
-                    Paste it into Figma.
-                  </h1>
-                  <p className="hero-sub">
-                    Free, <b>editable blocks</b> that paste into Figma as real <b>auto layout</b>.
-                  </p>
+                  {group === "Sections" ? (
+                    <>
+                      <h1 className="hero-head">
+                        Build pages faster.
+                        <br />
+                        Paste whole sections.
+                      </h1>
+                      <p className="hero-sub">
+                        Heroes, features, pricing and footers as real <b>auto layout</b>.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="hero-head">
+                        Copy a UI block.
+                        <br />
+                        Paste it into Figma.
+                      </h1>
+                      <p className="hero-sub">
+                        Free, <b>editable blocks</b> that paste into Figma as real <b>auto layout</b>.
+                      </p>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="hero-join"
                     onClick={() => document.getElementById("library")?.scrollIntoView({ behavior: "smooth" })}
                   >
-                    Explore blocks
+                    {group === "Sections" ? "Explore sections" : "Explore blocks"}
                   </button>
                 </header>
               )}

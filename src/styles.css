@@ -5422,3 +5422,68 @@ body {
 .chip:hover {
   background: #eaecef;
 }
+
+/* Fewer shadows: surfaces are flat; only menus and toasts, which float above the page, keep a soft one. */
+:root {
+  --glass-shadow: none;
+  --ink-glass: #17181a;
+}
+
+.hero-join,
+.join,
+.mark,
+.plan[data-on="true"],
+.ai-pill,
+.find,
+.find:focus-within,
+.hero-pill,
+.plan,
+.acct-btn,
+.saved-btn {
+  box-shadow: none;
+}
+
+.hero-join,
+.join,
+.mark {
+  border: 0;
+}
+
+.popover,
+.acct-menu,
+.toast {
+  box-shadow: 0 8px 24px rgba(23, 24, 26, 0.1);
+}
+
+/* Cards in bencho.dev's colour (its light card is 6% ink on white, #f1f1f1, no border), and its masonry:
+   the columns stretch and the last card of each one grows, so every column ends at the same line. */
+.card {
+  border-width: 0;
+  background: rgba(23, 24, 26, 0.06);
+}
+
+.chip,
+.bar .chip {
+  border-width: 0;
+  background: rgba(23, 24, 26, 0.06);
+}
+
+.chip:hover {
+  background: rgba(23, 24, 26, 0.1);
+}
+
+@media (min-width: 740px) {
+  .wall[data-layout="masonry"] {
+    align-items: stretch;
+  }
+
+  .wall[data-layout="masonry"] .col > :last-child {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .wall[data-layout="masonry"] .col > :last-child .stage {
+    flex: 1;
+  }
+}
