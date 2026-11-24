@@ -5262,9 +5262,7 @@ button.free-ghost {
 }
 
 ::view-transition-group(site-page) {
-  background:
-    radial-gradient(760px 520px at 96% 108%, rgba(186, 228, 212, 0.72), rgba(0, 0, 0, 0) 52%),
-    rgb(231, 237, 243);
+  background: #fff;
 }
 
 ::view-transition-old(site-page),
@@ -5361,4 +5359,29 @@ button.free-ghost {
   .hero-head {
     font-size: 38px;
   }
+}
+
+/* A white page, like details.so's light theme. */
+html,
+body {
+  background-color: #fff;
+  background-image: none;
+}
+
+/* Glass surfaces on a white page: a faint grey fill and hairline instead of translucent white. */
+:root {
+  --glass-bg: #f6f7f9;
+  --glass-strong: #eef0f3;
+  --glass-line: rgba(23, 24, 26, 0.08);
+}
+
+.find,
+.saved-btn,
+.acct-btn {
+  border-color: rgba(23, 24, 26, 0.08);
+  background: #f6f7f9;
+}
+
+.find:focus-within {
+  background: #f1f3f6;
 }
