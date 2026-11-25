@@ -1,9 +1,12 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { BLOCKS, groupOf } from "@/data/blocks";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
+import { BLOCKS, groupOf, resolveBlockId } from "@/data/blocks";
 
 export const Route = createFileRoute("/_site/b/$id")({
   beforeLoad: ({ params }) => {
-    if (!BLOCKS.some((block) => block.id === params.id)) throw notFound();
+    const id = resolveBlockId(params.id);
+    if (!id) throw notFound();
+    // An old id (an alias) goes to the block's current address.
+    if (id !== params.id) throw redirect({ to: "/b/$id", params: { id }, replace: true });
   },
   head: ({ params }) => {
     const block = BLOCKS.find((item) => item.id === params.id);

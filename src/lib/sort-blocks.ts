@@ -1,4 +1,5 @@
 import type { Block } from "@/data/blocks";
+import { blockLabel } from "./block-meta.ts";
 
 export type SortMode = "featured" | "new" | "popular" | "copied" | "name";
 export type Popularity = Record<
@@ -36,7 +37,7 @@ export function sortBlocks(
     [...blocks].sort((a, b) => score(b) - score(a) || at(a) - at(b));
   switch (mode) {
     case "new":
-      return by((block) => (block.badge === "New" ? 1 : 0));
+      return by((block) => (blockLabel(block) === "New" ? 1 : 0));
     case "popular": {
       if (!counts) return blocks;
       return by((block) => {

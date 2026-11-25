@@ -1,20 +1,20 @@
 import { createHash } from "node:crypto";
 import { getCookie, getRequestHeader } from "@tanstack/react-start/server";
-import { BLOCKS } from "@/data/blocks";
+import { BLOCKS, resolveBlockId } from "@/data/blocks";
 import { FREE_COPIES } from "@/lib/copy-limit";
 import { openDeviceId } from "@/lib/copy-cookie";
 import { getSessionUser } from "@/lib/auth/verify.server";
 import { getSql } from "@/lib/db";
 
-const KNOWN = new Set(BLOCKS.map((block) => block.id));
 const DEVICE_COOKIE = "supply_device";
 
 /**
  * Log one successful copy. Only counts a signed-in user or a device the copy gate has already
  * seen, and only for real block ids, so the numbers cannot be padded from outside.
  */
-export async function recordCopy(blockId: unknown): Promise<{ ok: boolean }> {
-  if (typeof blockId !== "string" || !KNOWN.has(blockId)) return { ok: false };
+export async function recordCopy(rawId: unknown): Promise<{ ok: boolean }> {
+  const blockId = typeof rawId === "string" ? resolveBlockId(rawId) : null;
+  if (!blockId) return { ok: false };
   const user = await getSessionUser();
   const device = openDeviceId(getCookie(DEVICE_COOKIE));
   if (!user && !device) return { ok: false };
@@ -49,8 +49,9 @@ function browserOf(agent: string | undefined): string {
  * Log one failed copy. Open to anyone (the visitor is the one who sees the failure), so it is capped
  * per visitor and per hour, only accepts real block ids and keeps a short message.
  */
-export async function recordCopyFailure(blockId: unknown, message: unknown): Promise<{ ok: boolean }> {
-  if (typeof blockId !== "string" || !KNOWN.has(blockId)) return { ok: false };
+export async function recordCopyFailure(rawId: unknown, message: unknown): Promise<{ ok: boolean }> {
+  const blockId = typeof rawId === "string" ? resolveBlockId(rawId) : null;
+  if (!blockId) return { ok: false };
   const text = (typeof message === "string" ? message : "").replace(/\s+/g, " ").trim().slice(0, 160) || "unknown";
   const user = await getSessionUser();
   const device = openDeviceId(getCookie(DEVICE_COOKIE));
