@@ -5487,3 +5487,13 @@ body {
     flex: 1;
   }
 }
+
+/* Card previews are drawn in the editor's frame: 360px wide (less when the card is narrower), centred, never
+   stretched to the width of the card. */
+.stage-frame {
+  display: flex;
+  width: 360px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+}

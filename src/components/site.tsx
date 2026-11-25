@@ -472,8 +472,11 @@ export function Site() {
           </svg>
         </button>
         <div className="stage">
-          <BlockView id={block.id} />
-        </div>
+            {/* The same 360px frame the editor draws the block in, so a card does not stretch it to its own width. */}
+            <div className="stage-frame">
+              <BlockView id={block.id} />
+            </div>
+          </div>
         <QcLayer blockId={block.id} blockName={block.name} where="card" />
         <span className="cname">{block.name}</span>
         <button
