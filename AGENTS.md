@@ -41,6 +41,13 @@ Locally `MIMIC_MOCK=true` returns a stand-in block without calling the model. Th
 allow-list in `src/lib/mimic-html.ts` before it is drawn.
 Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).
 
+## Blocks
+`src/data/blocks.ts` lists the blocks; metadata is typed in `src/lib/block-meta.ts`. `added` / `updated`
+(`YYYY-MM-DD`) give a "New" / "Updated" label for 30 days, no manual badge. `aliases` keeps an old
+`/b/<id>` link working (redirects, and copy/save logging maps it to the current id); copy counts and
+saved blocks stored under the old id need a one-off SQL update. `status: "draft"` hides a block in
+production but shows it in `npm run dev`.
+
 ## Notes
 - Deployed to Vercel: no runtime filesystem writes, no hard-coded hosts or secrets.
 - Do not commit a `.env` file.

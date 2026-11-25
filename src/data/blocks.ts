@@ -1,3 +1,5 @@
+import { canonicalId, isDraft, type BlockMeta } from "@/lib/block-meta";
+
 export type Category =
   | "Button"
   | "Input"
@@ -14,12 +16,11 @@ export type Category =
   | "FAQ"
   | "Footer";
 
-export type Block = {
+export type Block = BlockMeta & {
   id: string;
   name: string;
   cat: Category;
   h: number;
-  badge?: "New";
   /** Narrowest width (px) the block is laid out for; it is scaled down to fit below that. */
   minW?: number;
 };
@@ -39,8 +40,13 @@ export function groupOf(cat: Category): Group {
   return GROUP_CATEGORIES.Sections.includes(cat) ? "Sections" : "Components";
 }
 
-export const BLOCKS: Block[] = [
-  { id: "primary-button", name: "Primary button", cat: "Button", h: 220, badge: "New" },
+/**
+ * Every block, in the order they are shown. To keep a link alive after a rename, add the old id to
+ * `aliases`; saved blocks and copy counts stored under the old id need a one-off SQL update.
+ * Set `status: "draft"` to prepare a block without showing it in production.
+ */
+const ALL_BLOCKS: Block[] = [
+  { id: "primary-button", name: "Primary button", cat: "Button", h: 220, added: "2026-11-26" },
   { id: "button-set", name: "Button set", cat: "Button", h: 220 },
   { id: "icon-buttons", name: "Icon buttons", cat: "Button", h: 220 },
   { id: "split-button", name: "Split button", cat: "Button", h: 220 },
@@ -49,18 +55,18 @@ export const BLOCKS: Block[] = [
   { id: "password", name: "Password", cat: "Input", h: 280 },
   { id: "textarea", name: "Textarea", cat: "Input", h: 340 },
   { id: "select", name: "Select", cat: "Input", h: 380 },
-  { id: "otp", name: "One-time code", cat: "Input", h: 220, badge: "New" },
+  { id: "otp", name: "One-time code", cat: "Input", h: 220, added: "2026-11-26" },
   { id: "checklist", name: "Checklist", cat: "Input", h: 280 },
   { id: "radios", name: "Radio group", cat: "Input", h: 300 },
   { id: "toggle", name: "Toggle", cat: "Input", h: 200 },
   { id: "slider", name: "Slider", cat: "Input", h: 220 },
   { id: "segmented", name: "Segmented control", cat: "Input", h: 200 },
-  { id: "profile", name: "Profile card", cat: "Card", h: 420, badge: "New" },
+  { id: "profile", name: "Profile card", cat: "Card", h: 420, added: "2026-11-26" },
   { id: "stat", name: "Stat card", cat: "Card", h: 420 },
   { id: "free-plan", name: "Free plan", cat: "Card", h: 420 },
   { id: "badges", name: "Badges", cat: "Card", h: 200 },
   { id: "avatars", name: "Avatar group", cat: "Card", h: 220 },
-  { id: "orb", name: "Orb", cat: "Voice", h: 360, badge: "New" },
+  { id: "orb", name: "Orb", cat: "Voice", h: 360, added: "2026-11-26" },
   { id: "voice-button", name: "Voice button", cat: "Voice", h: 320 },
   { id: "waveform", name: "Live waveform", cat: "Voice", h: 240 },
   { id: "player", name: "Audio player", cat: "Voice", h: 280 },
@@ -110,28 +116,34 @@ export const BLOCKS: Block[] = [
   { id: "testimonial", name: "Testimonial", cat: "Card", h: 340 },
   { id: "product", name: "Product card", cat: "Card", h: 440 },
   { id: "notification", name: "Notification", cat: "Card", h: 240 },
-  { id: "login-form", name: "Login form", cat: "Form", h: 480, badge: "New" },
+  { id: "login-form", name: "Login form", cat: "Form", h: 480, added: "2026-11-26" },
   { id: "signup-form", name: "Sign-up form", cat: "Form", h: 500 },
   { id: "contact-form", name: "Contact form", cat: "Form", h: 520 },
   { id: "newsletter", name: "Newsletter", cat: "Form", h: 300, minW: 360 },
-  { id: "like-button", name: "Like button", cat: "Button", h: 200, badge: "New" },
-  { id: "label-input", name: "Label input", cat: "Input", h: 200, badge: "New" },
+  { id: "like-button", name: "Like button", cat: "Button", h: 200, added: "2026-11-26" },
+  { id: "label-input", name: "Label input", cat: "Input", h: 200, added: "2026-11-26" },
   { id: "signature-pad", name: "Signature pad", cat: "Input", h: 300 },
-  { id: "slide-confirm", name: "Slide to confirm", cat: "Input", h: 200, badge: "New" },
-  { id: "card-stack", name: "Card stack", cat: "Card", h: 300, badge: "New" },
+  { id: "slide-confirm", name: "Slide to confirm", cat: "Input", h: 200, added: "2026-11-26" },
+  { id: "card-stack", name: "Card stack", cat: "Card", h: 300, added: "2026-11-26" },
   { id: "reactions", name: "Reactions", cat: "Card", h: 200 },
-  { id: "tilt-card", name: "Tilt card", cat: "Card", h: 280, badge: "New" },
+  { id: "tilt-card", name: "Tilt card", cat: "Card", h: 280, added: "2026-11-26" },
   { id: "image-compare", name: "Image compare", cat: "Card", h: 300 },
   { id: "expanding-panels", name: "Expanding panels", cat: "Card", h: 300 },
-  { id: "toast-stack", name: "Toast stack", cat: "Overlay", h: 300, badge: "New" },
+  { id: "toast-stack", name: "Toast stack", cat: "Overlay", h: 300, added: "2026-11-26" },
   { id: "dynamic-island", name: "Dynamic island", cat: "Overlay", h: 200 },
   { id: "dock", name: "Dock", cat: "Nav", h: 240 },
-  { id: "rolling-counter", name: "Rolling counter", cat: "Data", h: 300, badge: "New" },
+  { id: "rolling-counter", name: "Rolling counter", cat: "Data", h: 300, added: "2026-11-26" },
   { id: "heat-map", name: "Heat map", cat: "Data", h: 300 },
   { id: "stacked-bars", name: "Stacked bars", cat: "Data", h: 320 },
-  { id: "hero", name: "Hero", cat: "Hero", h: 380, badge: "New", minW: 340 },
+  { id: "hero", name: "Hero", cat: "Hero", h: 380, added: "2026-11-26", minW: 340 },
   { id: "feature-grid", name: "Feature grid", cat: "Features", h: 260 },
   { id: "cta-banner", name: "CTA banner", cat: "CTA", h: 240 },
   { id: "faq", name: "FAQ", cat: "FAQ", h: 460, minW: 320 },
   { id: "footer", name: "Footer", cat: "Footer", h: 340 },
 ];
+
+/** The blocks visitors see: drafts only appear while running `npm run dev`. */
+export const BLOCKS: Block[] = ALL_BLOCKS.filter((block) => !isDraft(block) || import.meta.env?.DEV === true);
+
+/** The block id for `id`, following an old alias; `null` when there is no such block. */
+export const resolveBlockId = (id: string) => canonicalId(BLOCKS, id);
