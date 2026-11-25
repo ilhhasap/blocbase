@@ -634,7 +634,7 @@ export function Site() {
             to="/{-$page}"
             params={{ page: undefined }}
             className="logo"
-            aria-label="Bloc Supply home"
+            aria-label="Blocbase home"
             onClick={() => {
               setQuery("");
             }}

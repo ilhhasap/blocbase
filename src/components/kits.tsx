@@ -389,7 +389,7 @@ function TextField() {
       </Txt>
       <Field layer="Input">
         <Txt size={16} weight={500}>
-          Bloc Supply
+          Blocbase
         </Txt>
       </Field>
       <Txt size={12} weight={400} color={MUTE}>
