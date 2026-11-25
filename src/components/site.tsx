@@ -4,7 +4,8 @@ import { HeroField } from "@/components/hero-field";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
-import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, type Block, type Category, type Group } from "@/data/blocks";
+import { blockLabel } from "@/lib/block-meta";
+import { BLOCKS, GROUPS, GROUP_CATEGORIES, groupOf, resolveBlockId, type Block, type Category, type Group } from "@/data/blocks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { releaseCopy, reserveCopy } from "@/lib/copy-gate";
@@ -343,7 +344,7 @@ export function Site() {
         /* storage unavailable */
       }
       const known = new Set(BLOCKS.map((block) => block.id));
-      const ids = [...local, ...(pendingSave ? [pendingSave] : [])].filter((id) => known.has(id));
+      const ids = [...new Set([...local, ...(pendingSave ? [pendingSave] : [])].map((id) => resolveBlockId(id) ?? id))].filter((id) => known.has(id));
       try {
         const list = ids.length ? await mergeSavedBlocks({ data: { ids } }) : await listSavedBlocks();
         if (cancelled) return;
@@ -454,7 +455,7 @@ export function Site() {
           void navigate({ to: "/b/$id", params: { id: block.id } });
         }}
       >
-        {block.badge ? <span className="badge">{block.badge}</span> : null}
+        {blockLabel(block) ? <span className="badge">{blockLabel(block)}</span> : null}
         <button
           type="button"
           className="save"

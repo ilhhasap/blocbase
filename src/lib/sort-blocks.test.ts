@@ -3,18 +3,18 @@ import { test } from "node:test";
 import type { Block } from "../data/blocks.ts";
 import { sortBlocks } from "./sort-blocks.ts";
 
-const block = (id: string, name: string, badge?: "New"): Block => ({
+const block = (id: string, name: string, isNew?: boolean): Block => ({
   id,
   name,
   cat: "Button",
   h: 100,
-  ...(badge ? { badge } : {}),
+  ...(isNew ? { added: new Date().toISOString().slice(0, 10) } : {}),
 });
 const BLOCKS = [
   block("a", "Zed"),
-  block("b", "Alpha", "New"),
+  block("b", "Alpha", true),
   block("c", "Mid"),
-  block("d", "Beta", "New"),
+  block("d", "Beta", true),
 ];
 const ids = (list: Block[]) => list.map((item) => item.id);
 
