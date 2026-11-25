@@ -2,13 +2,13 @@
  * Transactional email for auth (server-only), via the Resend HTTP API.
  *
  *   RESEND_API_KEY   enables sending (and turns on required email verification)
- *   EMAIL_FROM       sender, e.g. "Bloc Supply <no-reply@yourdomain.com>"
+ *   EMAIL_FROM       sender, e.g. "Blocbase <no-reply@yourdomain.com>"
  *
  * Without RESEND_API_KEY nothing is sent: the message is logged to the server
  * console so local development works without an email provider.
  */
 const apiKey = process.env.RESEND_API_KEY?.trim() || undefined;
-const from = process.env.EMAIL_FROM?.trim() || "Bloc Supply <onboarding@resend.dev>";
+const from = process.env.EMAIL_FROM?.trim() || "Blocbase <onboarding@resend.dev>";
 
 /** True when a real email provider is configured. */
 export const emailConfigured = Boolean(apiKey);
@@ -38,7 +38,7 @@ const escapeHtml = (s: string) =>
 
 export function verificationEmail(url: string) {
   return {
-    subject: "Verify your email for Bloc Supply",
+    subject: "Verify your email for Blocbase",
     text: `Confirm your email to finish creating your account:\n\n${url}\n\nIf you did not sign up, ignore this message.`,
     html: `<p>Confirm your email to finish creating your account.</p><p><a href="${escapeHtml(url)}">Verify email</a></p><p>If you did not sign up, ignore this message.</p>`,
   };
@@ -46,7 +46,7 @@ export function verificationEmail(url: string) {
 
 export function resetPasswordEmail(url: string) {
   return {
-    subject: "Reset your Bloc Supply password",
+    subject: "Reset your Blocbase password",
     text: `Use this link to choose a new password (valid for 1 hour):\n\n${url}\n\nIf you did not ask for this, ignore this message. Your password stays the same.`,
     html: `<p>Use this link to choose a new password. It is valid for 1 hour.</p><p><a href="${escapeHtml(url)}">Reset password</a></p><p>If you did not ask for this, ignore this message. Your password stays the same.</p>`,
   };

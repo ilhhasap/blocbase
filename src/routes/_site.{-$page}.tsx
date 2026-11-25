@@ -5,20 +5,20 @@ const PAGES = ["sections", "pricing", "mimic", "saved"];
 
 const TITLES: Record<string, { title: string; description: string }> = {
   sections: {
-    title: "Sections — Bloc Supply",
+    title: "Sections — Blocbase",
     description: "Hero, features, call to action, FAQ and footer sections. Copy one and paste it into Figma as auto layout.",
   },
   mimic: {
-    title: "Mimic — Bloc Supply",
+    title: "Mimic — Blocbase",
     description: "Upload a screenshot of a component and get it back as an editable block you can paste into Figma. Coming soon.",
   },
   saved: {
-    title: "Saved — Bloc Supply",
+    title: "Saved — Blocbase",
     description: "The blocks you saved.",
   },
   pricing: {
-    title: "Pricing — Bloc Supply",
-    description: "Bloc Supply is free. The first three blocks need no account; after that, log in with a free account to keep copying.",
+    title: "Pricing — Blocbase",
+    description: "Blocbase is free. The first three blocks need no account; after that, log in with a free account to keep copying.",
   },
 };
 

@@ -10,7 +10,7 @@ import { FREE_COPIES } from "@/lib/copy-limit";
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({
-    meta: [{ title: "Dashboard — Bloc Supply" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [{ title: "Dashboard — Blocbase" }, { name: "robots", content: "noindex, nofollow" }],
   }),
 });
 
