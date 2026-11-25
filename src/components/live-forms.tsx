@@ -220,7 +220,7 @@ export function Fab() {
 /* ── Inputs ───────────────────────────────────────────────────── */
 
 export function TextField() {
-  const [text, setText] = useState("Bloc Supply");
+  const [text, setText] = useState("Blocbase");
   const empty = text.trim() === "";
   return (
     <Box layer="Text field" root fill dir="col" gap={8}>
@@ -228,7 +228,7 @@ export function TextField() {
         Project name
       </Txt>
       <Box layer="Input" dir="row" fill align="center" gap={10} pad="0 14px" h={48} radius={14} bg={PAPER} border={`1px solid ${empty ? CORAL : LINE}`}>
-        <Editable initial="Bloc Supply" placeholder="Name your project" onText={setText} />
+        <Editable initial="Blocbase" placeholder="Name your project" onText={setText} />
       </Box>
       <Txt size={12} weight={400} color={empty ? CORAL : MUTE}>
         {empty ? "A name is required." : "Shown on the canvas and in exports."}
