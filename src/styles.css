@@ -166,6 +166,7 @@
 }
 
 .bench-save,
+.bench-link,
 .bench-reset {
   position: absolute;
   display: grid;
@@ -187,18 +188,25 @@
   right: 14px;
 }
 
+.bench-link {
+  top: 13px;
+  right: 54px;
+}
+
 .bench-reset {
   right: 14px;
   bottom: 14px;
 }
 
 .bench-save:hover,
+.bench-link:hover,
 .bench-reset:hover {
   background: rgba(23, 24, 26, 0.06);
   color: var(--color-ink);
 }
 
 .bench-save:active,
+.bench-link:active,
 .bench-reset:active {
   transform: scale(0.92);
 }
@@ -207,11 +215,11 @@
   color: var(--color-ink);
 }
 
-.bench-canvas[data-fill="dark"] :is(.bench-save, .bench-reset) {
+.bench-canvas[data-fill="dark"] :is(.bench-save, .bench-link, .bench-reset) {
   color: #9a9a9e;
 }
 
-.bench-canvas[data-fill="dark"] :is(.bench-save, .bench-reset):hover {
+.bench-canvas[data-fill="dark"] :is(.bench-save, .bench-link, .bench-reset):hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
@@ -353,7 +361,6 @@
   padding-top: 24px;
 }
 
-.bench-share,
 .bench-code,
 .bench-copy {
   display: inline-flex;
@@ -370,14 +377,12 @@
     filter 0.16s;
 }
 
-.bench-share,
 .bench-code {
   border: 1px solid rgba(23, 24, 26, 0.14);
   background: transparent;
   color: #4a4a4e;
 }
 
-.bench-share:hover,
 .bench-code:hover {
   background: rgba(23, 24, 26, 0.04);
 }
@@ -392,7 +397,6 @@
   filter: brightness(1.12);
 }
 
-.bench-share:active,
 .bench-code:active,
 .bench-copy:active {
   transform: scale(0.98);
@@ -2896,6 +2900,7 @@ button.free-ghost {
 
 .bench-toggle,
 .bench-save,
+.bench-link,
 .bench-reset {
   z-index: 2;
 }
