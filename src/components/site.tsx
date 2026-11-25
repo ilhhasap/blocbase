@@ -1,4 +1,5 @@
 import { evenBorderColors } from "@/lib/figma-border";
+import { percentLineHeights } from "@/lib/figma-line-height";
 import { HeroField } from "@/components/hero-field";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -229,7 +230,7 @@ async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
     // Appended as text: going through `style` would merge the longhands the converter reads.
     clone.setAttribute("style", `${clone.getAttribute("style") ?? ""};background-image:linear-gradient(#ffffff, #ffffff)`);
   }
-  return generateFromElement(clone, { topLayerName: block.name });
+  return percentLineHeights(await generateFromElement(clone, { topLayerName: block.name }));
 }
 
 export function Site() {
@@ -1242,5 +1243,6 @@ function AuthSlot({
     </div>
   );
 }
+
 
 
