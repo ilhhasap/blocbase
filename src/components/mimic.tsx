@@ -266,6 +266,17 @@ const isThumb = (value: unknown): value is string =>
   value.startsWith("data:image/jpeg;base64,") &&
   value.length < 400_000;
 
+/** The block cloned most recently (run ids start with the time they were made), as its node id. */
+function newestResultNode(flows: Flow[]): string | null {
+  let best: string | null = null;
+  for (const flow of flows) {
+    for (const run of flow.runs) {
+      if (run.result && (best === null || run.id > best)) best = run.id;
+    }
+  }
+  return best ? `out-${best}` : null;
+}
+
 const nodeIdsOf = (flow: Flow) => [
   `img-${flow.id}`,
   ...flow.runs.map((run) => `out-${run.id}`),
@@ -1710,8 +1721,10 @@ function MimicTool({
       reveal.current = null;
       focus(go.ids, go.mode);
     } else if (!fitted.current && all.length && measured(all)) {
+      // Opening Mimic lands on the block cloned last, not on the whole board.
       fitted.current = true;
-      focus(all, "fit");
+      const latest = newestResultNode(flows);
+      focus(latest && measured([latest]) ? [latest] : all, "fit");
     } else if (refit.current) {
       refit.current = false;
       focus(all, "fit");
