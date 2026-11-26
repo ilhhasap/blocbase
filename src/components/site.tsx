@@ -279,6 +279,23 @@ export function Site() {
       /* storage can be blocked */
     }
   };
+  // How many columns the wall may use on a wide screen, picked in the account menu. Narrow screens still use fewer.
+  const [colsPref, setColsPref] = useState<2 | 3>(3);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem("block-supply-cols") === "2") setColsPref(2);
+    } catch {
+      /* storage can be blocked */
+    }
+  }, []);
+  const pickCols = (value: 2 | 3) => {
+    setColsPref(value);
+    try {
+      window.localStorage.setItem("block-supply-cols", String(value));
+    } catch {
+      /* storage can be blocked */
+    }
+  };
   const [saved, setSaved] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   // The last message stays on screen while the toast fades out.
@@ -434,7 +451,7 @@ export function Site() {
   }, [query, group, cat, savedPage, saved, sort, counts]);
 
   // Sections are wide layouts, so they get at most two columns; a search mixes groups and keeps the usual grid.
-  const wallCols = group === "Sections" && !query.trim() && !savedPage ? Math.min(cols, 2) : cols;
+  const wallCols = Math.min(group === "Sections" && !query.trim() && !savedPage ? Math.min(cols, 2) : cols, colsPref);
   const packed = useMemo(() => pack(filtered, wallCols), [filtered, wallCols]);
 
   const renderCard = (block: Block) => (
@@ -725,6 +742,8 @@ export function Site() {
             savedCount={saved.length}
             layout={layout}
             onLayout={pickLayout}
+            colsPref={colsPref}
+            onCols={pickCols}
             showLayout={!ownPage || savedPage}
             onSaved={() => void navigate({ to: "/{-$page}", params: { page: "saved" } })}
           />
@@ -848,7 +867,7 @@ export function Site() {
                   )}
                 </div>
               ) : (
-                <div className="wall" id="library" data-layout={layout} data-kind={group === "Sections" && !savedPage ? "wide" : "tile"}>
+                <div className="wall" id="library" data-layout={layout} data-cols={wallCols} data-kind={group === "Sections" && !savedPage ? "wide" : "tile"}>
                   {layout === "grid"
                     ? filtered.map(renderCard)
                     : packed.map((column, index) => (
@@ -1108,6 +1127,8 @@ function AuthSlot({
   onLogin,
   layout,
   onLayout,
+  colsPref,
+  onCols,
   showLayout,
 }: {
   savedCount: number;
@@ -1115,6 +1136,8 @@ function AuthSlot({
   onLogin: () => void;
   layout: "masonry" | "grid";
   onLayout: (value: "masonry" | "grid") => void;
+  colsPref: 2 | 3;
+  onCols: (value: 2 | 3) => void;
   showLayout: boolean;
 }) {
   const { user, isPending } = useCurrentUserState();
@@ -1228,6 +1251,24 @@ function AuthSlot({
                       <rect x="9" y="9" width="5" height="5" rx="1.2" fill="currentColor" />
                     </svg>
                   </button>
+                </div>
+              </div>
+              <div className="acct-row">
+                <span id="cols-label">Grid size</span>
+                <div className="acct-seg" role="radiogroup" aria-labelledby="cols-label">
+                  {([2, 3] as const).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={colsPref === n}
+                      aria-label={`${n} columns`}
+                      data-on={colsPref === n ? "true" : "false"}
+                      onClick={() => onCols(n)}
+                    >
+                      {n === 2 ? "II" : "III"}
+                    </button>
+                  ))}
                 </div>
               </div>
             </>
