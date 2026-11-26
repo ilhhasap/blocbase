@@ -237,7 +237,7 @@ export async function generateMimic(
     const status = await getMimicStatus(userId);
     throw new Error(
       status.used >= CREDITS
-        ? "You have used all your Claude credits for this 5-hour window."
+        ? "You have used all your Remake credits for this 5-hour window."
         : "A generation is already running.",
     );
   }
