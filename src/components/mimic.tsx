@@ -942,7 +942,6 @@ function Example() {
   }, []);
   return (
     <div className="mimic-example" aria-hidden="true" inert>
-      <p className="mimic-example-tag">Example</p>
       <div className="mimic-example-row">
         <div className="mimic-item mimic-source" data-example="">
           <p className="mimic-label">
@@ -2570,11 +2569,11 @@ function MimicTool({
             Add a screenshot of one component. Remake rebuilds it as an editable
             block you can tune and paste into Figma as auto layout.
           </p>
+          <Example />
           <p className="mimic-tip">
             Drag the background or scroll to move. Pinch, or hold ⌘ and scroll,
             to zoom. Shift-drag to select.
           </p>
-          <Example />
         </div>
       ) : null}
 
