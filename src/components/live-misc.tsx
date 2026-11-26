@@ -720,84 +720,137 @@ function Pill({ label, tone, onClick }: { label: string; tone: "solid" | "line";
   );
 }
 
-export function Hero() {
-  const [state, run] = useFlow(700, 1200);
+/** A section drawn as a whole desktop screen: one 1440 x 800 frame, so it pastes into Figma as that frame. */
+function Screen({ layer, bg = PAPER, dir = "col", align = "stretch", justify = "flex-start", pad = 0, gap = 0, children }: {
+  layer: string; bg?: string; dir?: "row" | "col"; align?: "stretch" | "center" | "flex-start" | "flex-end"; justify?: "flex-start" | "center" | "flex-end" | "space-between"; pad?: number | string; gap?: number; children: ReactNode;
+}) {
   return (
-    <Box layer="Hero" root fill dir="col" align="center" gap={18} pad="16px 0">
-      <Box layer="Pill" dir="row" hug="both" align="center" pad="6px 14px" radius={999} bg={WASH}>
-        <Txt size={12} weight={500} color={MUTE}>New in version 2</Txt>
-      </Box>
-      <Box layer="Copy" dir="col" align="center" gap={10}>
-        <Txt size={34} weight={600}>Build faster, together</Txt>
-        <Txt size={15} weight={400} color={MUTE}>Components your whole team can edit.</Txt>
-      </Box>
-      <Box layer="Actions" dir="row" align="center" gap={10}>
-        <Box layer="Get started" dir="row" hug="both" align="center" justify="center" gap={6} pad="12px 18px" radius={999} bg={state === "done" ? GREEN : INK} ui={act(run, "Get started")}>
-          {state === "busy" ? <Spin size={14} color={PAPER} /> : state === "done" ? <Check /> : null}
-          <Txt size={15} weight={500} color={PAPER}>{state === "done" ? "You are in" : "Get started"}</Txt>
-        </Box>
-        <Pill label="Learn more" tone="line" />
-      </Box>
+    <Box layer={layer} root dir={dir} w={1440} h={800} bg={bg} align={align} justify={justify} pad={pad} gap={gap} style={{ overflow: "hidden" }}>
+      {children}
     </Box>
   );
 }
 
+export function Hero() {
+  const [state, run] = useFlow(700, 1200);
+  return (
+    <Screen layer="Hero">
+      <Box layer="Nav" dir="row" fill align="center" justify="space-between" pad="28px 64px">
+        <Txt size={22} weight={600}>Northwind</Txt>
+        <Box layer="Links" dir="row" align="center" gap={36}>
+          <Txt size={16} weight={500} color={MUTE}>Product</Txt>
+          <Txt size={16} weight={500} color={MUTE}>Customers</Txt>
+          <Txt size={16} weight={500} color={MUTE}>Pricing</Txt>
+          <Txt size={16} weight={500} color={MUTE}>Docs</Txt>
+        </Box>
+        <Pill label="Sign in" tone="line" />
+      </Box>
+      <Box layer="Content" dir="col" fill align="center" justify="center" gap={32} style={{ flex: 1 }}>
+        <Box layer="Pill" dir="row" hug="both" align="center" pad="8px 18px" radius={999} bg={WASH}>
+          <Txt size={15} weight={500} color={MUTE}>New in version 2</Txt>
+        </Box>
+        <Box layer="Copy" dir="col" align="center" gap={24}>
+          <Box layer="Headline" dir="col" align="center" gap={0}>
+            <Txt size={88} weight={600}>Build faster,</Txt>
+            <Txt size={88} weight={600}>together</Txt>
+          </Box>
+          <Txt size={22} weight={400} color={MUTE}>Components your whole team can edit, in one place.</Txt>
+        </Box>
+        <Box layer="Actions" dir="row" align="center" gap={14}>
+          <Box layer="Get started" dir="row" hug="both" align="center" justify="center" gap={8} pad="18px 28px" radius={999} bg={state === "done" ? GREEN : INK} ui={act(run, "Get started")}>
+            {state === "busy" ? <Spin size={16} color={PAPER} /> : state === "done" ? <Check /> : null}
+            <Txt size={18} weight={500} color={PAPER}>{state === "done" ? "You are in" : "Get started"}</Txt>
+          </Box>
+          <Box layer="Learn more" dir="row" hug="both" align="center" justify="center" pad="18px 28px" radius={999} bg={PAPER} border="1px solid rgba(23,24,26,0.14)">
+            <Txt size={18} weight={500}>Learn more</Txt>
+          </Box>
+        </Box>
+      </Box>
+    </Screen>
+  );
+}
+
 export function FeatureGrid() {
-  const items: [string, string, string][] = [["Fast", "Paste in a click", BLUE], ["Editable", "Real auto layout", TEAL], ["Consistent", "One type system", VIOLET]];
+  const items: [string, string, string][] = [
+    ["Fast", "Paste in a click and keep working. Nothing to install, nothing to learn.", BLUE],
+    ["Editable", "Every layer arrives as real auto layout, ready for your own changes.", TEAL],
+    ["Consistent", "One type system and one spacing scale across every block you add.", VIOLET],
+  ];
   const [on, setOn] = useState<string | null>(null);
   return (
-    <Box layer="Feature grid" root fill dir="row" align="flex-start" gap={16}>
-      {items.map(([title, body, color]) => (
-        <Box key={title} layer={title} dir="col" gap={10} style={{ flex: 1 }} ui={pick(() => setOn(on === title ? null : title), on === title, "option")}>
-          <Box layer="Icon" w={40} h={40} radius={on === title ? 20 : 12} bg={color} style={{ transition: "border-radius 0.2s ease" }} />
-          <Txt size={15} weight={600}>{title}</Txt>
-          <Txt size={13} weight={400} color={on === title ? INK : MUTE} wrap>{body}</Txt>
+    <Screen layer="Feature grid" bg={WASH} pad="96px 96px" gap={56}>
+      <Box layer="Heading" dir="col" gap={16}>
+        <Txt size={16} weight={600} color={MUTE}>Features</Txt>
+        <Box layer="Title" dir="col" gap={0}>
+          <Txt size={60} weight={600}>Everything a team</Txt>
+          <Txt size={60} weight={600}>needs to ship</Txt>
         </Box>
-      ))}
-    </Box>
+      </Box>
+      <Box layer="Cards" dir="row" fill gap={24} style={{ flex: 1 }}>
+        {items.map(([title, body, color]) => (
+          <Box key={title} layer={title} dir="col" gap={20} pad={36} radius={32} bg={PAPER} style={{ flex: 1 }} ui={pick(() => setOn(on === title ? null : title), on === title, "option")}>
+            <Box layer="Icon" w={64} h={64} radius={on === title ? 32 : 20} bg={color} style={{ transition: "border-radius 0.2s ease" }} />
+            <Txt size={28} weight={600}>{title}</Txt>
+            <Txt size={18} weight={400} color={on === title ? INK : MUTE} wrap>{body}</Txt>
+          </Box>
+        ))}
+      </Box>
+    </Screen>
   );
 }
 
 export function CtaBanner() {
   const [state, run] = useFlow(600, 1300);
   return (
-    <Box layer="CTA banner" root fill dir="row" align="center" justify="space-between" gap={16} pad="24px 28px" radius={24} bg={INK}>
-      <Box layer="Copy" dir="col" gap={4}>
-        <Txt size={20} weight={600} color={PAPER}>Ready to start?</Txt>
-        <Txt size={13} weight={400} color="#C2C1BA">Free to try, no card needed.</Txt>
+    <Screen layer="CTA banner" bg={WASH} align="center" justify="center">
+      <Box layer="Banner" dir="col" w={1200} h={460} radius={56} bg={INK} align="center" justify="center" gap={36}>
+        <Box layer="Copy" dir="col" align="center" gap={16}>
+          <Txt size={72} weight={600} color={PAPER}>Ready to start?</Txt>
+          <Txt size={22} weight={400} color="#C2C1BA">Free to try, no card needed.</Txt>
+        </Box>
+        <Box layer="Button" dir="row" hug="both" align="center" justify="center" gap={8} pad="18px 32px" radius={999} bg={PAPER} ui={act(run, "Get started")}>
+          {state === "busy" ? <Spin size={16} /> : state === "done" ? <Check color={GREEN} /> : null}
+          <Txt size={18} weight={600}>{state === "done" ? "Let us go" : "Get started"}</Txt>
+        </Box>
       </Box>
-      <Box layer="Button" dir="row" hug="both" align="center" justify="center" gap={6} pad="12px 20px" radius={999} bg={PAPER} ui={act(run, "Get started")}>
-        {state === "busy" ? <Spin size={14} /> : state === "done" ? <Check color={GREEN} /> : null}
-        <Txt size={14} weight={600}>{state === "done" ? "Let us go" : "Get started"}</Txt>
-      </Box>
-    </Box>
+    </Screen>
   );
 }
 
 export function Footer() {
-  const cols: [string, string[]][] = [["Product", ["Blocks", "Pricing", "Changelog"]], ["Company", ["About", "Careers", "Contact"]]];
+  const cols: [string, string[]][] = [
+    ["Product", ["Blocks", "Sections", "Pricing", "Changelog"]],
+    ["Company", ["About", "Careers", "Press", "Contact"]],
+    ["Resources", ["Docs", "Guides", "Community", "Status"]],
+  ];
   const [on, setOn] = useState<string | null>(null);
   return (
-    <Box layer="Footer" root fill dir="col" gap={20} pad="4px 0">
-      <Box layer="Columns" dir="row" fill align="flex-start" justify="space-between" gap={24}>
-        <Box layer="Brand" dir="col" gap={4}>
-          <Txt size={15} weight={600}>Supply</Txt>
-          <Txt size={12} weight={400} color={MUTE}>Blocks for Figma</Txt>
-        </Box>
-        {cols.map(([title, links]) => (
-          <Box key={title} layer={title} dir="col" gap={8}>
-            <Txt size={12} weight={600} color={MUTE}>{title}</Txt>
-            {links.map((l) => (
-              <Box key={l} layer={l} dir="row" align="center" ui={act(() => setOn(l), l)}>
-                <Txt size={13} weight={on === l ? 600 : 400}>{l}</Txt>
-              </Box>
-            ))}
-          </Box>
-        ))}
+    <Screen layer="Footer" pad="96px 96px 64px" justify="space-between">
+      <Box layer="Statement" dir="col" gap={0}>
+        <Txt size={96} weight={600}>Blocks for</Txt>
+        <Txt size={96} weight={600} color={MUTE}>every team.</Txt>
       </Box>
-      <Box layer="Rule" fill h={1} bg={LINE} />
-      <Txt size={12} weight={400} color={MUTE}>© 2026 Supply. All rights reserved.</Txt>
-    </Box>
+      <Box layer="Bottom" dir="col" fill gap={40}>
+        <Box layer="Columns" dir="row" fill align="flex-start" justify="space-between" gap={48}>
+          <Box layer="Brand" dir="col" gap={8}>
+            <Txt size={22} weight={600}>Northwind</Txt>
+            <Txt size={15} weight={400} color={MUTE}>Blocks for Figma</Txt>
+          </Box>
+          {cols.map(([title, links]) => (
+            <Box key={title} layer={title} dir="col" gap={14}>
+              <Txt size={14} weight={600} color={MUTE}>{title}</Txt>
+              {links.map((l) => (
+                <Box key={l} layer={l} dir="row" align="center" ui={act(() => setOn(l), l)}>
+                  <Txt size={17} weight={on === l ? 600 : 400}>{l}</Txt>
+                </Box>
+              ))}
+            </Box>
+          ))}
+        </Box>
+        <Box layer="Rule" fill h={1} bg={LINE} />
+        <Txt size={14} weight={400} color={MUTE}>© 2026 Northwind. All rights reserved.</Txt>
+      </Box>
+    </Screen>
   );
 }
 
