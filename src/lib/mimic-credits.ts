@@ -4,11 +4,11 @@
  * and Opus more than Sonnet.
  */
 
-/** One credit is this many US dollars of model cost (so 1,000 credits are $0.50). */
+/** One credit is this many US dollars of model cost (so 500 credits are $0.25). */
 export const CREDIT_USD = 0.0005;
 
 /** Credits in a session when MIMIC_CREDITS is not set. */
-export const DEFAULT_CREDITS = 1000;
+export const DEFAULT_CREDITS = 500;
 
 /** What a run with no recorded cost counts as: runs from before credits existed, and the run in flight. */
 export const DEFAULT_RUN_CREDITS = 250;

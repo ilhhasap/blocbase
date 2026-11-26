@@ -636,6 +636,16 @@ function Spark() {
   );
 }
 
+/** A small coin for the credit balance. */
+function CreditMark() {
+  return (
+    <svg className="mimic-coin" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.6" />
+      <circle cx="12" cy="12" r="3.4" />
+    </svg>
+  );
+}
+
 /** The Claude starburst, standing still (Spark is the one that turns). */
 function ClaudeMark() {
   return (
@@ -2231,7 +2241,7 @@ function MimicTool({
                 : noShot
                   ? "The screenshot was not kept. Press Replace and add it again."
                   : out
-                    ? "No Claude credits left in this 5-hour window. Pick a free model to keep going."
+                    ? "No Remake credits left in this 5-hour window. Pick a free model to keep going."
                     : undefined;
             return (
               <Fragment key={flow.id}>
@@ -2594,20 +2604,20 @@ function MimicTool({
           <button
             type="button"
             className="mimic-pill"
-            aria-label={`${left} of ${status.limit} Claude credits left`}
+            aria-label={`${left} of ${status.limit} Remake credits left`}
           >
-            <ClaudeMark />
+            <CreditMark />
             <span>{`${(left ?? 0).toLocaleString("en-US")} / ${status.limit.toLocaleString("en-US")}`}</span>
           </button>
           <div className="mimic-quota mimic-pop" role="status">
             <div className="mimic-quota-row">
-              <span className="mimic-quota-name">Claude credits</span>
+              <span className="mimic-quota-name">Remake credits</span>
               <span>{`${Math.round((Math.max(0, status.limit - status.used) / Math.max(1, status.limit)) * 100)}% left`}</span>
             </div>
             <div
               className="mimic-quota-track"
               role="progressbar"
-              aria-label="Claude credits used in this 5-hour window"
+              aria-label="Remake credits used in this 5-hour window"
               aria-valuemin={0}
               aria-valuemax={status.limit}
               aria-valuenow={Math.min(status.used, status.limit)}
