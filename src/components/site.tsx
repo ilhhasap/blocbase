@@ -680,7 +680,7 @@ export function Site() {
                 setQuery("");
               }}
             >
-              Mimic
+              Remake
               <span className="ai-pill" title="Made with AI">
                 <svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true">
                   <path d="M6 0.6 7.2 4.8 11.4 6 7.2 7.2 6 11.4 4.8 7.2 0.6 6 4.8 4.8Z" fill="currentColor" />
@@ -1005,10 +1005,10 @@ function Questions() {
           </dd>
         </div>
         <div className="qa">
-          <dt>What is Mimic?</dt>
+          <dt>What is Remake?</dt>
           <dd>
             {MIMIC_ENABLED
-              ? "Upload a screenshot of one component and Mimic rebuilds it as an editable block you can tune and paste into Figma as auto layout. It is free with an account, with a few rebuilds a day."
+              ? "Upload a screenshot of one component and Remake rebuilds it as an editable block you can tune and paste into Figma as auto layout. It is free with an account, with a few rebuilds a day."
               : "Upload a screenshot of one component and get it back as an editable block you can paste into Figma. It is coming soon, and it will be free with an account."}
           </dd>
         </div>

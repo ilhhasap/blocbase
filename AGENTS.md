@@ -27,7 +27,7 @@ QC comments (local only): run `VITE_QC_ENABLED=true npm run dev`, press "Review"
 anywhere on a card or in the editor to pin a comment; Option-click opens a card's editor. Comments are kept in
 `.qc/comments.json` (git-ignored) with the block, the part under the pin and the page; a fix can be written back
 as `reply`. The `/api/qc` endpoint is a 404 outside `npm run dev`, so none of this exists in production.
-Mimic (screenshot to editable block, `/mimic`) is behind a flag: only `VITE_MIMIC_ENABLED=true` turns it on (the
+Remake (called Mimic in the code and env vars; screenshot to editable block, `/mimic`) is behind a flag: only `VITE_MIMIC_ENABLED=true` turns it on (the
 server functions answer "Not found" otherwise, so production shows "Coming soon"). It needs `ANTHROPIC_API_KEY`,
 is for signed-in visitors and limited by `MIMIC_CREDITS` (default 1000 credits per 5-hour session, like Claude: the first run opens a session that resets 5 hours later). A run costs what its tokens cost at the model's price (`src/lib/mimic-credits.ts`: 1 credit = $0.0005, prices per model there, update them when prices change); the cost is stored in `mimic_runs.credits`, and runs without one count as 250. `MIMIC_PER_SESSION` / `MIMIC_PER_DAY` (run counts) are no longer read: remove them from the Vercel project. `MIMIC_MODEL`
 overrides the default model (`claude-sonnet-5-5`); each Mimic node can pick any model in `src/lib/mimic-models.ts`.
