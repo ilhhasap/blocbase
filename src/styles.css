@@ -3994,12 +3994,9 @@ button.free-ghost {
   user-select: none;
 }
 
-.mimic-example-tag {
-  margin: 0 0 10px;
-  color: var(--color-ink-4);
-  font: 500 12px/1 var(--font-sans);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+/* The how-to-move hint sits under the example. */
+.mimic-example + .mimic-tip {
+  margin-top: 28px;
 }
 
 .mimic-example-row {
