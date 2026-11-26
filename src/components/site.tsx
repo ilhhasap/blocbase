@@ -226,10 +226,15 @@ async function convertKit(block: Block, kit: HTMLElement): Promise<string> {
   // is see-through. A white-to-white gradient survives and looks the same.
   // Every block with a white card (forms, pricing, dialogs) needs it; a Mimic block with no fill gets one too.
   if (clone instanceof HTMLElement && ((clearRoot && block.id.startsWith("mimic-")) || nearWhite(rootFill))) {
+    // The gradient repeats the block's own colour, so a light grey pill does not paste as pure white.
+    const fill = clearRoot ? "#ffffff" : rootFill;
     // Appended as text: going through `style` would merge the longhands the converter reads.
-    clone.setAttribute("style", `${clone.getAttribute("style") ?? ""};background-image:linear-gradient(#ffffff, #ffffff)`);
+    clone.setAttribute("style", `${clone.getAttribute("style") ?? ""};background-image:linear-gradient(${fill}, ${fill})`);
   }
-  return percentLineHeights(await generateFromElement(clone, { topLayerName: block.name }));
+  return percentLineHeights(await generateFromElement(clone, { topLayerName: block.name }), {
+    // A rebuilt button or pill hugs its label, so a wider font in Figma cannot spill out of it.
+    hug: block.id.startsWith("mimic-"),
+  });
 }
 
 export function Site() {

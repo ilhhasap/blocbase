@@ -1,5 +1,5 @@
 import { compileSchema, decodeBinarySchema } from "@/lib/kiwi/shim";
-import { lowerLineHeights } from "@/lib/line-height-percent";
+import { hugRowRoot, lowerLineHeights } from "@/lib/line-height-percent";
 
 /**
  * The Figma converter writes every text layer's line height in pixels. Designers expect a percentage of the font
@@ -24,7 +24,7 @@ async function run(bytes: Uint8Array, stream: CompressionStream | DecompressionS
   return new Uint8Array(await new Response(piped).arrayBuffer());
 }
 
-export async function percentLineHeights(html: string): Promise<string> {
+export async function percentLineHeights(html: string, { hug = false } = {}): Promise<string> {
   try {
     const found = PAYLOAD.exec(html);
     if (!found) return html;
@@ -44,7 +44,9 @@ export async function percentLineHeights(html: string): Promise<string> {
       encodeMessage(message: unknown): Uint8Array;
     };
     const message = codec.decodeMessage(await run(chunks[1]!, new DecompressionStream("deflate-raw")));
-    if (!lowerLineHeights(message)) return html;
+    const lowered = lowerLineHeights(message);
+    const hugged = hug && hugRowRoot(message);
+    if (!lowered && !hugged) return html;
     chunks[1] = await run(codec.encodeMessage(message), new CompressionStream("deflate-raw"));
     const size = 12 + chunks.reduce((sum, chunk) => sum + 4 + chunk.length, 0);
     const out = new Uint8Array(size);
