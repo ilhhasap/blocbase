@@ -189,7 +189,7 @@ export async function generateMimic(
     if (provider === "openrouter" && !process.env.OPENROUTER_API_KEY)
       throw new Error("Add OPENROUTER_API_KEY to use this model.");
     if (provider === "anthropic" && !process.env.ANTHROPIC_API_KEY)
-      throw new Error("Mimic is not set up on this server yet.");
+      throw new Error("Remake is not set up on this server yet.");
   }
   const render =
     typeof input.render === "string" &&
@@ -392,7 +392,7 @@ export async function generateMimic(
       name:
         typeof parsed?.name === "string" && parsed.name.trim()
           ? parsed.name.trim().slice(0, 40)
-          : "Mimic block",
+          : "Remake block",
       html,
       note,
       used: status.used,
@@ -405,7 +405,7 @@ export async function generateMimic(
       console.error("[mimic]", error.status, error.message);
       throw new Error(
         error.status === 429
-          ? "Mimic is busy. Try again in a minute."
+          ? "Remake is busy. Try again in a minute."
           : "The model could not be reached. Try again.",
       );
     }
@@ -571,7 +571,7 @@ async function generateViaOpenRouter(
     name:
       typeof parsed?.name === "string" && parsed.name.trim()
         ? parsed.name.trim().slice(0, 40)
-        : "Mimic block",
+        : "Remake block",
     html,
     note,
     used: status.used,
