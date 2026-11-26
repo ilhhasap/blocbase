@@ -9,7 +9,7 @@ const TITLES: Record<string, { title: string; description: string }> = {
     description: "Hero, features, call to action, FAQ and footer sections. Copy one and paste it into Figma as auto layout.",
   },
   mimic: {
-    title: "Mimic — Blocbase",
+    title: "Remake — Blocbase",
     description: "Upload a screenshot of a component and get it back as an editable block you can paste into Figma. Coming soon.",
   },
   saved: {

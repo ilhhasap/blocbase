@@ -136,7 +136,7 @@ function ComingSoon() {
       <p className="mimic-soon" aria-hidden="true">
         Soon
       </p>
-      <h1 className="mimic-title">Mimic</h1>
+      <h1 className="mimic-title">Remake</h1>
       <p className="mimic-sub">
         Upload a screenshot of a component and get it back as an editable block,
         ready to paste into Figma.
@@ -254,7 +254,7 @@ function revive(item: Partial<Result> | undefined): Result | null {
   registerGenerated(item.id, html);
   return {
     id: item.id,
-    name: String(item.name ?? "Mimic block").slice(0, 40),
+    name: String(item.name ?? "Remake block").slice(0, 40),
     html,
     note: String(item.note ?? ""),
     model: isMimicModel(item.model) ? item.model : undefined,
@@ -2287,7 +2287,7 @@ function MimicTool({
                   {flow.photo ? (
                     <p className="mimic-warn" role="status">
                       This looks like a photo, not a screenshot of one
-                      component. Mimic may not find anything to rebuild.
+                      component. Remake may not find anything to rebuild.
                     </p>
                   ) : null}
                   {showTools ? (
@@ -2321,7 +2321,7 @@ function MimicTool({
                             className="mimic-run"
                             onClick={onLogin}
                           >
-                            Log in to use Mimic
+                            Log in to use Remake
                           </button>
                         )}
                         <ModelMenu
@@ -2555,9 +2555,9 @@ function MimicTool({
 
       {flows.length === 0 ? (
         <div className="mimic-blank">
-          <h1 className="mimic-title">Mimic</h1>
+          <h1 className="mimic-title">Remake</h1>
           <p className="mimic-sub">
-            Add a screenshot of one component. Mimic rebuilds it as an editable
+            Add a screenshot of one component. Remake rebuilds it as an editable
             block you can tune and paste into Figma as auto layout.
           </p>
           <p className="mimic-tip">
@@ -2575,7 +2575,7 @@ function MimicTool({
               {!signedIn
                 ? "Free with an account."
                 : status?.configured === false
-                  ? "Mimic is not set up on this server: add ANTHROPIC_API_KEY."
+                  ? "Remake is not set up on this server: add ANTHROPIC_API_KEY."
                   : status?.pass
                     ? `Free pass: no limit${status.mock ? " · mock mode, no model is called" : ""}`
                     : ""}
