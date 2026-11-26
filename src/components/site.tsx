@@ -26,6 +26,7 @@ import { hostOf, isControlEvent, kitIn } from "@/components/shadow-host";
 
 const LOCAL_SAVED = "block-supply-saved";
 const TOAST_TEXT: Record<string, string> = {
+  "Atelier opens soon": "Atelier opens soon",
   "Couldn’t copy": "Couldn’t copy",
   "Link copied": "Link copied",
   "HTML copied": "HTML copied",
@@ -36,7 +37,7 @@ const TOAST_TEXT: Record<string, string> = {
   "Couldn’t save": "Couldn’t save, try again",
 };
 /** Messages that report a failure rather than a success. */
-const ERROR_TOASTS = new Set(["Couldn’t copy", "Couldn’t save"]);
+const ERROR_TOASTS = new Set(["Couldn’t copy", "Couldn’t save", "Atelier opens soon"]);
 const PENDING_SAVE = "supply-pending-save";
 const PENDING_COPY = "supply-pending-copy";
 
@@ -259,7 +260,7 @@ export function Site() {
         : pageParam === "sections" || pageParam === "pricing" || pageParam === "mimic" || pageParam === "saved"
           ? pageParam
           : "components";
-  const group: Group = page === "sections" ? "Sections" : "Components";
+  const group: Group = page === "sections" ? "Sections" : "Blocks";
   // Pages that are not a block library: no group tab is active on them.
   const savedPage = page === "saved";
   const ownPage = page === "pricing" || page === "mimic" || savedPage;
@@ -455,7 +456,13 @@ export function Site() {
           void navigate({ to: "/b/$id", params: { id: block.id } });
         }}
       >
-        {blockLabel(block) ? <span className="badge">{blockLabel(block)}</span> : null}
+        {block.premium ? (
+          <span className="badge" data-premium="true">
+            {`Atelier · $${block.premium.price}`}
+          </span>
+        ) : blockLabel(block) ? (
+          <span className="badge">{blockLabel(block)}</span>
+        ) : null}
         <button
           type="button"
           className="save"
@@ -478,7 +485,7 @@ export function Site() {
         </button>
         <div className="stage">
             {/* The same 360px frame the editor draws the block in, so a card does not stretch it to its own width. */}
-            <div className="stage-frame">
+            <div className="stage-frame" data-wide={groupOf(block.cat) === "Sections" ? "true" : undefined}>
               <BlockView id={block.id} />
             </div>
           </div>
@@ -496,7 +503,7 @@ export function Site() {
           }}
         >
           <FigmaMark />
-          {busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
+          {block.premium ? "Locked" : busy === block.id ? "Copying" : copied === block.id ? "Copied" : "Copy"}
         </button>
       </article>
   );
@@ -542,6 +549,11 @@ export function Site() {
 
   async function onCopy(block: Block, kit: HTMLElement | null) {
     if (!kit || busy) return;
+    // Atelier blocks are paid and buying is not open yet, so copying stays locked.
+    if (block.premium) {
+      setToast("Atelier opens soon");
+      return;
+    }
     setBusy(block.id);
     // What happened on the way, so a failure can undo exactly what was done.
     const state: { gate: Awaited<ReturnType<typeof reserveCopy>> | null; reserved: boolean } = { gate: null, reserved: false };

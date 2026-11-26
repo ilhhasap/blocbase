@@ -47,6 +47,10 @@ Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).
 `/b/<id>` link working (redirects, and copy/save logging maps it to the current id); copy counts and
 saved blocks stored under the old id need a one-off SQL update. `status: "draft"` hides a block in
 production but shows it in `npm run dev`.
+Two groups: Blocks (small components) and Sections (whole 1440 x 800 screens: `Screen` in
+`src/components/live-misc.tsx`, `minW: 1440`). Paid blocks live in the Blocks category **Atelier**: give a block
+`premium: { price, by? }`. Their cards wear the price and copying is locked ("Atelier opens soon") until
+payments exist (`onCopy` in `src/components/site.tsx`); the preview stays open.
 
 ## Notes
 - Deployed to Vercel: no runtime filesystem writes, no hard-coded hosts or secrets.

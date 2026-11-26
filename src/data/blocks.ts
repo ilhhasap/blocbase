@@ -14,7 +14,8 @@ export type Category =
   | "Features"
   | "CTA"
   | "FAQ"
-  | "Footer";
+  | "Footer"
+  | "Atelier";
 
 export type Block = BlockMeta & {
   id: string;
@@ -26,18 +27,18 @@ export type Block = BlockMeta & {
 };
 
 /** Top-level groups shown in the navbar. */
-export type Group = "Components" | "Sections";
+export type Group = "Blocks" | "Sections";
 
-export const GROUPS: Group[] = ["Components", "Sections"];
+export const GROUPS: Group[] = ["Blocks", "Sections"];
 
 /** The categories (filter chips) that belong to each group. */
 export const GROUP_CATEGORIES: Record<Group, Category[]> = {
-  Components: ["Button", "Input", "Card", "Voice", "Overlay", "Nav", "Data", "Status", "Form"],
+  Blocks: ["Button", "Input", "Card", "Voice", "Overlay", "Nav", "Data", "Status", "Form", "Atelier"],
   Sections: ["Hero", "Features", "CTA", "FAQ", "Footer"],
 };
 
 export function groupOf(cat: Category): Group {
-  return GROUP_CATEGORIES.Sections.includes(cat) ? "Sections" : "Components";
+  return GROUP_CATEGORIES.Sections.includes(cat) ? "Sections" : "Blocks";
 }
 
 /**
@@ -135,11 +136,12 @@ const ALL_BLOCKS: Block[] = [
   { id: "rolling-counter", name: "Rolling counter", cat: "Data", h: 300, added: "2026-11-26" },
   { id: "heat-map", name: "Heat map", cat: "Data", h: 300 },
   { id: "stacked-bars", name: "Stacked bars", cat: "Data", h: 320 },
-  { id: "hero", name: "Hero", cat: "Hero", h: 380, added: "2026-11-26", minW: 340 },
-  { id: "feature-grid", name: "Feature grid", cat: "Features", h: 260 },
-  { id: "cta-banner", name: "CTA banner", cat: "CTA", h: 240 },
-  { id: "faq", name: "FAQ", cat: "FAQ", h: 460, minW: 320 },
-  { id: "footer", name: "Footer", cat: "Footer", h: 340 },
+  { id: "hero", name: "Hero", cat: "Hero", h: 340, added: "2026-11-26", minW: 1440 },
+  { id: "feature-grid", name: "Feature grid", cat: "Features", h: 340, minW: 1440 },
+  { id: "cta-banner", name: "CTA banner", cat: "CTA", h: 340, minW: 1440 },
+  { id: "faq", name: "FAQ", cat: "FAQ", h: 340, minW: 1440 },
+  { id: "footer", name: "Footer", cat: "Footer", h: 340, minW: 1440 },
+  { id: "feedback-sheet", name: "Feedback sheet", cat: "Atelier", h: 420, added: "2026-11-26", premium: { price: 12 } },
 ];
 
 /** The blocks visitors see: drafts only appear while running `npm run dev`. */

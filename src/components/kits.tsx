@@ -2275,7 +2275,50 @@ function Footer() {
   );
 }
 
+function FeedbackSheet() {
+  return (
+    <Box layer="Feedback sheet" root fill dir="col" gap={20} pad={24} radius={32} bg={PAPER} border="1px solid rgba(23,24,26,0.08)" shadow>
+      <Box layer="Header" dir="row" fill align="center" justify="space-between">
+        <Txt size={20} weight={600}>
+          Help us improve
+        </Txt>
+        <Box layer="Close" w={24} h={24} radius={12} bg={LINE} />
+      </Box>
+      <Box layer="Choices" dir="row" align="center" gap={10}>
+        <Box layer="Helpful" dir="row" hug="both" align="center" pad="10px 18px" radius={999} bg={INK}>
+          <Txt size={15} weight={500} color={PAPER}>
+            Helpful
+          </Txt>
+        </Box>
+        <Box layer="Not helpful" dir="row" hug="both" align="center" pad="10px 18px" radius={999} bg={WASH}>
+          <Txt size={15} weight={500} color={MUTE}>
+            Not helpful
+          </Txt>
+        </Box>
+      </Box>
+      <Box layer="Message" dir="col" fill pad="14px 16px" radius={20} bg={WASH}>
+        <Txt size={15} weight={400} wrap>
+          Solid answer, but it could use more implementation steps.
+        </Txt>
+      </Box>
+      <Box layer="Actions" dir="row" fill align="center" gap={10}>
+        <Box layer="Cancel" dir="row" align="center" justify="center" pad="14px 0" radius={999} bg={WASH} style={{ flex: 1 }}>
+          <Txt size={16} weight={600}>
+            Cancel
+          </Txt>
+        </Box>
+        <Box layer="Submit" dir="row" align="center" justify="center" pad="14px 0" radius={999} bg={INK} style={{ flex: 1 }}>
+          <Txt size={16} weight={600} color={PAPER}>
+            Submit
+          </Txt>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 export const VIEWS: Record<string, () => ReactNode> = {
+  "feedback-sheet": FeedbackSheet,
   "primary-button": Primary,
   "button-set": ButtonSet,
   "icon-buttons": IconButtons,
