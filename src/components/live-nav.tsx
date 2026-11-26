@@ -495,20 +495,21 @@ const FAQ_ITEMS: [string, string][] = [
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <Box layer="FAQ" root fill dir="col" gap={28}>
-      <Box layer="Heading" dir="col" gap={6}>
-        <Txt size={24} weight={600}>
-          Frequently asked questions
-        </Txt>
-        <Txt size={14} weight={400} color={MUTE}>
-          Quick answers about using the blocks.
+    <Box layer="FAQ" root dir="row" w={1440} h={800} bg={PAPER} pad="96px 120px" gap={96} style={{ overflow: "hidden" }}>
+      <Box layer="Heading" dir="col" w={420} gap={20}>
+        <Box layer="Title" dir="col" gap={0}>
+          <Txt size={56} weight={600}>Questions,</Txt>
+          <Txt size={56} weight={600}>answered</Txt>
+        </Box>
+        <Txt size={18} weight={400} color={MUTE} wrap>
+          Quick answers about using the blocks. Can&apos;t find yours? Write to us.
         </Txt>
       </Box>
-      <Box layer="Items" dir="col" fill gap={0}>
+      <Box layer="Items" dir="col" gap={0} style={{ flex: 1 }}>
         <Box layer="Rule" fill h={1} bg={LINE} />
         {FAQ_ITEMS.map(([q, a], i) => (
           <Box key={q} layer={q} dir="col" fill>
-            <Box layer="Item" dir="col" fill gap={8} pad="18px 0">
+            <Box layer="Item" dir="col" fill gap={12} pad="26px 0">
               <Box
                 layer="Question row"
                 dir="row"
@@ -517,15 +518,15 @@ export function Faq() {
                 justify="space-between"
                 ui={{ ...act(() => setOpen(open === i ? null : i), q), "aria-expanded": open === i }}
               >
-                <Txt size={15} weight={500}>
+                <Txt size={21} weight={500}>
                   {q}
                 </Txt>
-                <Txt size={20} weight={400} color={MUTE}>
+                <Txt size={28} weight={400} color={MUTE}>
                   {open === i ? "–" : "+"}
                 </Txt>
               </Box>
               {open === i ? (
-                <Txt size={14} weight={400} color={MUTE} wrap>
+                <Txt size={17} weight={400} color={MUTE} wrap>
                   {a}
                 </Txt>
               ) : null}

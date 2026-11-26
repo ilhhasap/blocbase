@@ -5502,3 +5502,35 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* Sections are whole 1440 x 800 screens: they use the full width of the card and the editor, scaled down to fit. */
+.stage-frame[data-wide="true"],
+.bench-frame[data-wide="true"] {
+  width: 100%;
+}
+
+.wall[data-layout="grid"][data-kind="wide"] .card {
+  aspect-ratio: 9 / 5.6;
+}
+
+/* Atelier (paid) blocks wear their price. */
+.badge[data-premium="true"] {
+  background: #17181a;
+  color: #fff;
+}
+
+/* Section cards are all the same shape, so the last one in a column keeps its size instead of stretching. */
+@media (min-width: 740px) {
+  .wall[data-layout="masonry"][data-kind="wide"] {
+    align-items: flex-start;
+  }
+
+  .wall[data-layout="masonry"][data-kind="wide"] .col > :last-child {
+    display: block;
+    flex-grow: 0;
+  }
+
+  .wall[data-layout="masonry"][data-kind="wide"] .col > :last-child .stage {
+    flex: none;
+  }
+}
