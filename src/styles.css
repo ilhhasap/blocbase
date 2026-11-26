@@ -5534,3 +5534,8 @@ body {
     flex: none;
   }
 }
+
+/* Grid size from the account menu: two columns of equal tiles. */
+.wall[data-layout="grid"][data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
