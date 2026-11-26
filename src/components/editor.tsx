@@ -41,7 +41,7 @@ function blurb(block: Block) {
       "Rebuilt from your image. Drag a bar to tune it,",
       "then copy this version into Figma.",
     ];
-  if (block.premium) return ["A paid Atelier block. Drag a bar to tune it;", "copying opens soon."];
+  if (block.premium) return ["A paid Signature block. Drag a bar to tune it;", "copying opens soon."];
   const kind = `${block.cat.toLowerCase()} ${groupOf(block.cat) === "Sections" ? "section" : "block"}`;
   const article = "aeiou".includes(kind[0] ?? "") ? "An" : "A";
   return [
@@ -807,7 +807,7 @@ export function Editor({
               }}
             >
               <FigmaMark />
-              {block.premium ? `Atelier · $${block.premium.price}` : busy ? "Copying" : copied ? "Copied" : "Copy to Figma"}
+              {block.premium ? `Signature · $${block.premium.price}` : busy ? "Copying" : copied ? "Copied" : "Copy to Figma"}
             </button>
           </div>
         </aside>

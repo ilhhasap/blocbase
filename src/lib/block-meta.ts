@@ -13,7 +13,7 @@ export type BlockMeta = {
   aliases?: string[];
   /** `draft` hides the block everywhere in production. It still shows in `npm run dev` for review. */
   status?: BlockStatus;
-  /** A paid block, shown in Atelier. `price` is in US dollars; `by` credits a guest author. */
+  /** A paid block, shown in Signature. `price` is in US dollars; `by` credits a guest author. */
   premium?: { price: number; by?: string };
 };
 
