@@ -15,7 +15,7 @@ export type Category =
   | "CTA"
   | "FAQ"
   | "Footer"
-  | "Atelier";
+  | "Signature";
 
 export type Block = BlockMeta & {
   id: string;
@@ -33,7 +33,7 @@ export const GROUPS: Group[] = ["Blocks", "Sections"];
 
 /** The categories (filter chips) that belong to each group. */
 export const GROUP_CATEGORIES: Record<Group, Category[]> = {
-  Blocks: ["Button", "Input", "Card", "Voice", "Overlay", "Nav", "Data", "Status", "Form", "Atelier"],
+  Blocks: ["Button", "Input", "Card", "Voice", "Overlay", "Nav", "Data", "Status", "Form", "Signature"],
   Sections: ["Hero", "Features", "CTA", "FAQ", "Footer"],
 };
 
@@ -141,7 +141,7 @@ const ALL_BLOCKS: Block[] = [
   { id: "cta-banner", name: "CTA banner", cat: "CTA", h: 340, minW: 1440 },
   { id: "faq", name: "FAQ", cat: "FAQ", h: 340, minW: 1440 },
   { id: "footer", name: "Footer", cat: "Footer", h: 340, minW: 1440 },
-  { id: "feedback-sheet", name: "Feedback sheet", cat: "Atelier", h: 420, added: "2026-11-26", premium: { price: 12 } },
+  { id: "feedback-sheet", name: "Feedback sheet", cat: "Signature", h: 420, added: "2026-11-26", premium: { price: 12 } },
 ];
 
 /** The blocks visitors see: drafts only appear while running `npm run dev`. */
