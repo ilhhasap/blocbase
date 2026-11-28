@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { expandIcons } from "./mimic-icons.ts";
+import { loadLucide } from "./mimic-lucide.ts";
+
+test("puts the real Lucide drawing where the model named an icon", async () => {
+  const out = await expandIcons(
+    '<div><svg data-icon="search" width="20" height="20" color="#ff0000"></svg><span>Find</span></div>',
+    loadLucide,
+  );
+  assert.match(out, /data-layer="Icon search"/);
+  assert.match(out, /width="20" height="20"/);
+  assert.match(out, /stroke="#ff0000"/);
+  assert.match(out, /<circle cx="11" cy="11" r="8">/);
+  assert.doesNotMatch(out, /data-icon|key=/);
+  assert.match(out, /<span>Find<\/span><\/div>$/);
+});
+
+test("handles self-closing tags and several icons", async () => {
+  const out = await expandIcons('<svg data-icon="x"/><p></p><svg data-icon="check"></svg>', loadLucide);
+  assert.equal(out.match(/<svg /g)?.length, 2);
+  assert.match(out, /Icon x.*<p><\/p>.*Icon check/s);
+});
+
+test("keeps a visible spot for an unknown name, or the model's own drawing", async () => {
+  assert.match(await expandIcons('<svg data-icon="no-such-icon"></svg>', loadLucide), /<rect x="4"/);
+  const own = '<svg data-icon="openai" viewBox="0 0 24 24"><path d="M1 1"></path></svg>';
+  assert.equal(await expandIcons(own, loadLucide), own);
+});
+
+test("leaves other drawings alone and does not let attributes break out", async () => {
+  const plain = '<svg viewBox="0 0 1 1"><path d="M0 0"></path></svg>';
+  assert.equal(await expandIcons(plain, loadLucide), plain);
+  const out = await expandIcons(`<svg data-icon="x" color="red'<script>"></svg>`, loadLucide);
+  assert.doesNotMatch(out, /<script/);
+});
