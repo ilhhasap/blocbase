@@ -5586,3 +5586,20 @@ body {
     padding-bottom: 180px;
   }
 }
+
+/* A selected Remake result is ringed on its card only, thinly: not around the "Made with" label. */
+.mimic-item.mimic-out[data-selected] {
+  outline: none;
+}
+.mimic-out .card,
+.mimic-out .mimic-empty {
+  outline: 1px solid rgba(10, 132, 255, 0);
+  outline-offset: 0;
+  transition:
+    outline-color 0.2s,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mimic-out[data-selected="true"] .card,
+.mimic-out[data-selected="true"] .mimic-empty {
+  outline-color: #0a84ff;
+}
