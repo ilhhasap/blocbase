@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { expandIcons } from "./mimic-icons.ts";
-import { loadLucide } from "./mimic-lucide.ts";
+import { loadLogo, loadLucide } from "./mimic-lucide.ts";
+import { LOGO_NAMES } from "./mimic-prompt.ts";
 
 test("puts the real Lucide drawing where the model named an icon", async () => {
   const out = await expandIcons(
@@ -33,4 +34,20 @@ test("leaves other drawings alone and does not let attributes break out", async 
   assert.equal(await expandIcons(plain, loadLucide), plain);
   const out = await expandIcons(`<svg data-icon="x" color="red'<script>"></svg>`, loadLucide);
   assert.doesNotMatch(out, /<script/);
+});
+
+test("puts a brand's real logo, in its own colours unless one is asked for", async () => {
+  const black = await expandIcons('<svg data-logo="openai" width="24" height="24"></svg>', loadLucide, loadLogo);
+  assert.match(black, /data-layer="Logo openai"/);
+  assert.match(black, /fill="#000000"/);
+  const white = await expandIcons('<svg data-logo="google" color="#ffffff"></svg>', loadLucide, loadLogo);
+  assert.match(white, /fill="#ffffff"/);
+  assert.doesNotMatch(white, /#4285F4|currentColor/i);
+  const own = await expandIcons('<svg data-logo="google"></svg>', loadLucide, loadLogo);
+  assert.match(own, /#4285F4/i);
+  assert.match(await expandIcons('<svg data-logo="constructor"></svg>', loadLucide, loadLogo), /<rect x="4"/);
+});
+
+test("every brand the model is told about has a logo", async () => {
+  for (const name of LOGO_NAMES) assert.ok(await loadLogo(name), name);
 });

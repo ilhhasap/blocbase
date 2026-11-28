@@ -1,3 +1,14 @@
+/** The brands in mimic-logos.ts (a test keeps the two in step). */
+export const LOGO_NAMES = [
+  "openai", "claude", "anthropic", "gemini", "mistral", "perplexity", "grok", "xai", "copilot", "midjourney",
+  "deepseek", "huggingface", "cursor", "ollama", "qwen", "nvidia", "google", "apple", "microsoft", "meta",
+  "aws", "github", "gitlab", "vercel", "figma", "framer", "notion", "linear", "discord", "zoom", "telegram",
+  "whatsapp", "messenger", "instagram", "facebook", "x", "tiktok", "youtube", "reddit", "pinterest",
+  "snapchat", "threads", "dribbble", "behance", "spotify", "netflix", "twitch", "stripe", "paypal", "visa",
+  "mastercard", "applepay", "googlepay", "shopify", "dropbox", "googledrive", "gmail", "googlecalendar",
+  "trello", "asana", "jira", "airtable", "supabase", "firebase", "docker", "react", "tailwindcss",
+];
+
 /** What Claude is told when it turns a screenshot into a block. Kept apart so it can be tuned alone. */
 export const MIMIC_SYSTEM = `You rebuild one UI component from a screenshot as HTML that pastes into Figma as auto layout.
 
@@ -14,7 +25,8 @@ Rules for "html":
 4. Text: font-family:Geist, sans-serif with font-size, font-weight, line-height and color on every text element, copied from the screenshot. Write line-height as a percentage of the font size (for example 140%): bigger text has a tighter line height (about 150% for small text, 120% for headings, 100% for hero text), and never below 80%. Reproduce the text exactly, including capitalisation.
 5. Colours: read them from the image as hex. Keep border-radius, borders (1px solid colour) and box-shadow only where the image shows them.
 6. Icons: for an ordinary interface icon (search, arrows, check, close, bell, user, heart and the like) do not draw it. Name the closest Lucide icon in an empty svg: <svg data-icon="arrow-right" width="16" height="16" color="#17181a"></svg>. Use Lucide's kebab-case names, the size and colour from the image, and add stroke-width="1.5" for thin icons. The app puts the real drawing in. Leave an icon that is already drawn in HTML you are correcting as it is, unless it is the wrong icon.
-   Logos, brand marks and illustrations are not Lucide icons: never leave one out. Draw them as below and keep their place and size.
+   Brand logos: when a mark is one of these brands, do not draw it, name it: <svg data-logo="openai" width="20" height="20"></svg>. Leave color out to get the brand's own colours; add color only when the image shows the mark in one different colour (for example white on a dark button). A logo with its name beside it is the data-logo svg plus a text element. The names: ${LOGO_NAMES.join(", ")}. ChatGPT is "openai".
+   Other logos, brand marks and illustrations: never leave one out. Draw them as below and keep their place and size.
    Drawings: small inline <svg> with viewBox, using only path, circle, rect, line, polyline, polygon or ellipse with fill/stroke attributes (stroke-dasharray, stroke-dashoffset and transform are allowed). Keep every drawing cheap: at most about a dozen shapes. Repeated marks such as tick rings, dials, dots, bars or grids are ONE element with stroke-dasharray (for example a circle with stroke-dasharray="2 6" and a wide stroke), never one element per mark. Approximate an illustration, logo or photo with a few flat shapes in its main colours. Keep drawings cheap, but never save space on text or rows: the size limits apply to drawings only.
 7. Name every meaningful element with data-layer (e.g. "Title", "Email field", "Primary button"). Use div and span for everything, not form elements.
 8. Work out one scale factor before you write any CSS. Screenshots are usually captured at 2x or 3x, so pixel measures in the image are two or three times the CSS px. Find the body text in the image (its x-height or line pitch), decide what it would be in CSS px (normally 14 to 16px, small captions 12 to 13px, a title 20 to 28px, a hero heading up to 40px), and divide every measure by the same factor: font sizes, widths, heights, padding, gaps, radii, icon sizes. Do not scale some things and not others. Typical card, dialog and popover widths are 320 to 560px; if your root is wider than 640px or your body text is over 18px, you did not divide enough.

@@ -40,7 +40,8 @@ Vercel's 4.5 MB request limit, so keep those two numbers in `src/components/mimi
 Locally `MIMIC_MOCK=true` returns a stand-in block without calling the model. The model's HTML is rebuilt from an
 allow-list in `src/lib/mimic-html.ts` before it is drawn.
 Remake icons: the model names a Lucide icon (`<svg data-icon="search">`) and `src/lib/mimic-icons.ts` puts the real
-drawing in; brand logos are still drawn by the model. "Auto-check" on the image node runs a second pass that compares
+drawing in. Brands work the same way (`<svg data-logo="openai">`) from `src/lib/mimic-logos.ts`, built by
+`scripts/build-logos.mjs`; keep `LOGO_NAMES` in `mimic-prompt.ts` in step. Other logos are drawn by the model. "Auto-check" on the image node runs a second pass that compares
 the block with the screenshot (about twice the credits). `npm run remake:eval -- <label>` runs the prompt over the
 screenshots in `.qc/remake/shots/` into a side-by-side report (real, paid model calls; `--dry` makes none).
 Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).
