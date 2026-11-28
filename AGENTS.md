@@ -32,7 +32,9 @@ server functions answer "Not found" otherwise, so production shows "Coming soon"
 is for signed-in visitors and limited by `MIMIC_CREDITS` (default 500 credits per 5-hour session, like Claude: the first run opens a session that resets 5 hours later). A run costs what its tokens cost at the model's price (`src/lib/mimic-credits.ts`: 1 credit = $0.0005, prices per model there, update them when prices change); the cost is stored in `mimic_runs.credits`, and runs without one count as 250. `MIMIC_PER_SESSION` / `MIMIC_PER_DAY` (run counts) are no longer read: remove them from the Vercel project. `MIMIC_MODEL`
 overrides the default model (`claude-sonnet-5-5`); each Mimic node can pick any model in `src/lib/mimic-models.ts`.
 Free OpenRouter models (`:free`) need `OPENROUTER_API_KEY`; they skip the limit and are not logged in `mimic_runs`.
-Emails in `MIMIC_PASS_EMAILS` (comma separated, verified in production) are a free pass: no limit on Mimic.
+In production Remake needs a verified email (Google, or the link sent through Resend). All accounts together are
+capped at `MIMIC_DAILY_CREDITS` per 24 hours (default 4000 = $2; failed runs count too, 0 pauses paid models).
+Emails in `MIMIC_PASS_EMAILS` (comma separated, verified in production) are a free pass: no limit on Mimic, daily cap included.
 To turn Mimic on in production: set `VITE_MIMIC_ENABLED=true` (read at build time, so redeploy) and
 `ANTHROPIC_API_KEY` (optionally `OPENROUTER_API_KEY`) in the Vercel project. `vite.config.ts` gives the function the
 plan's maximum duration (a rebuild takes tens of seconds), and the client keeps the screenshot plus any render under

@@ -13,6 +13,15 @@ export const DEFAULT_CREDITS = 500;
 /** What a run with no recorded cost counts as: runs from before credits existed, and the run in flight. */
 export const DEFAULT_RUN_CREDITS = 250;
 
+/** Credits all accounts together may spend in 24 hours when MIMIC_DAILY_CREDITS is not set ($2). */
+export const DEFAULT_DAILY_CREDITS = 4000;
+
+/** The server's daily ceiling from MIMIC_DAILY_CREDITS; anything that is not a number of 0 or more is the default. */
+export function dailyCredits(value: string | undefined): number {
+  const parsed = value?.trim() ? Number(value) : NaN;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_DAILY_CREDITS;
+}
+
 type Price = { input: number; output: number; cacheRead: number; cacheWrite: number };
 
 /** Anthropic list prices in US dollars per million tokens (cache writes at the 5-minute rate, 1.25x input). */

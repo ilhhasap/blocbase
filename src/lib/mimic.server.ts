@@ -7,7 +7,7 @@ import {
   MIMIC_SYSTEM,
   hasPlaceholders,
 } from "@/lib/mimic-prompt";
-import { creditsFor, DEFAULT_CREDITS, DEFAULT_RUN_CREDITS } from "@/lib/mimic-credits";
+import { creditsFor, dailyCredits, DEFAULT_CREDITS, DEFAULT_RUN_CREDITS } from "@/lib/mimic-credits";
 import {
   DEFAULT_MIMIC_MODEL,
   isMimicModel,
@@ -21,6 +21,8 @@ const DEFAULT_MODEL = process.env.MIMIC_MODEL || DEFAULT_MIMIC_MODEL;
 /** Credits per session. A session starts with a run and lasts 5 hours, like Claude's own limit; a run costs what its tokens cost. */
 const CREDITS = Math.max(1, Number(process.env.MIMIC_CREDITS) || DEFAULT_CREDITS);
 const SESSION_MS = 5 * 3600 * 1000;
+/** The most all accounts together may cost in 24 hours, so many new accounts cannot run up the bill. 0 pauses paid models. */
+const DAILY_CREDITS = dailyCredits(process.env.MIMIC_DAILY_CREDITS);
 const MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 // Vercel refuses a request body over 4.5 MB, and a refine sends the screenshot and a render together.
 const MAX_BASE64 = 2_600_000; // about 1.9 MB of image
@@ -69,6 +71,28 @@ async function hasPass(userId: string): Promise<boolean> {
   if (!row) return false;
   const verified = row.emailVerified || process.env.NODE_ENV !== "production";
   return verified && allowed.includes(row.email.toLowerCase());
+}
+
+/** In production Remake is only for accounts whose email address is proven (Google, or the link we sent). */
+async function emailIsVerified(userId: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== "production") return true;
+  const sql = await getSql();
+  const rows = await sql.query<{ emailVerified: boolean }>(
+    'select "emailVerified" from "user" where id = $1',
+    [userId],
+  );
+  return rows[0]?.emailVerified === true;
+}
+
+/** What every account together has cost in the last 24 hours, failed runs included: they cost money too. */
+async function spentToday(): Promise<number> {
+  const sql = await getSql();
+  const rows = await sql.query<{ total: string | number }>(
+    `select coalesce(sum(coalesce(credits, case when status = 'failed' then 0 else $1 end)), 0) as total
+     from mimic_runs where created_at > now() - interval '24 hours'`,
+    [DEFAULT_RUN_CREDITS],
+  );
+  return Number(rows[0]?.total ?? 0);
 }
 
 /**
@@ -212,6 +236,12 @@ export async function generateMimic(
       ? `${hint ? `What it is: ${hint}. ` : ""}Correct this rebuild so it matches the screenshot.${size}${render ? " The second image is how the current HTML renders." : ""}\n\nCurrent HTML:\n${current}`
       : `${hint ? `Rebuild this component. The user's notes (what it is, and anything to change from the screenshot, such as colours or what to leave out): ${hint}` : "Rebuild this component."}${size}${facts ? `\n\n${facts}` : ""}`;
 
+  if (!(await emailIsVerified(userId))) {
+    throw new Error(
+      "Verify your email to use Remake: open the link we sent you, or sign in with Google.",
+    );
+  }
+
   // Free models cost nothing, so they skip the daily limit and are not logged as runs.
   if (provider === "openrouter") {
     return generateViaOpenRouter(userId, {
@@ -225,6 +255,9 @@ export async function generateMimic(
   }
 
   const pass = await hasPass(userId);
+  if (!pass && (await spentToday()) >= DAILY_CREDITS) {
+    throw new Error("Remake has reached its limit for today. Please try again later.");
+  }
   const sql = await getSql();
   const session = await currentSession(userId);
   const taken = await sql.query<{ id: string }>(
@@ -251,7 +284,8 @@ export async function generateMimic(
     credits?: number,
   ) =>
     sql.query(
-      "update mimic_runs set status = $2, input_tokens = $3, output_tokens = $4, cache_read_tokens = $5, credits = $6 where id = $1",
+      // coalesce: the catch below marks a run failed again and must not wipe what it cost.
+      "update mimic_runs set status = $2, input_tokens = coalesce($3, input_tokens), output_tokens = coalesce($4, output_tokens), cache_read_tokens = coalesce($5, cache_read_tokens), credits = coalesce($6, credits) where id = $1",
       [
         runId,
         status,
@@ -350,8 +384,16 @@ export async function generateMimic(
         `[mimic] ${MODEL} in ${usage.input} (cached ${usage.cached}) out ${usage.output} tokens, stop ${response.stop_reason}`,
       );
     }
+    // The cost of this run: its tokens at the price of the model that answered (a fallback model may have).
+    // Kept even when the run fails below: a failed run is not charged to the person but is still paid for.
+    const cost = creditsFor(response.model ?? MODEL, {
+      input: usage.input,
+      output: usage.output,
+      cacheRead: usage.cached,
+      cacheWrite: response.usage.cache_creation_input_tokens ?? 0,
+    });
+    await finish("failed", usage, cost);
     if (response.stop_reason === "refusal") {
-      await finish("failed", usage);
       throw new Error("That image could not be rebuilt. Try a different one.");
     }
     const text = response.content.find((block) => block.type === "text");
@@ -367,28 +409,18 @@ export async function generateMimic(
     const note =
       typeof parsed?.note === "string" ? parsed.note.slice(0, 240) : "";
     if (!html) {
-      await finish("failed", usage);
       throw new Error(note || "No component could be rebuilt from that image.");
     }
     if (hasPlaceholders(html)) {
-      await finish("failed", usage);
       throw new Error(
         "The model left part of the block out. This run was not counted; try again.",
       );
     }
     if (html.length > MAX_HTML) {
-      await finish("failed", usage);
       throw new Error(
         "That component is too detailed to rebuild. Try a simpler crop.",
       );
     }
-    // The cost of this run: its tokens at the price of the model that answered (a fallback model may have).
-    const cost = creditsFor(response.model ?? MODEL, {
-      input: usage.input,
-      output: usage.output,
-      cacheRead: usage.cached,
-      cacheWrite: response.usage.cache_creation_input_tokens ?? 0,
-    });
     await finish("done", usage, cost);
     const status = await getMimicStatus(userId);
     return {

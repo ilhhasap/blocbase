@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { creditsFor } from "./mimic-credits.ts";
+import { creditsFor, dailyCredits, DEFAULT_DAILY_CREDITS } from "./mimic-credits.ts";
 
 test("a bigger run costs more, and Opus costs more than Sonnet", () => {
   const small = { input: 2000, output: 2000 };
@@ -24,4 +24,13 @@ test("an unlisted model is charged at the dearest rate, and a run costs at least
   const tokens = { input: 1000, output: 1000 };
   assert.equal(creditsFor("something-else", tokens), creditsFor("claude-fable-5-2", tokens));
   assert.equal(creditsFor("claude-haiku-5-5", { input: 1, output: 1 }), 1);
+});
+
+test("the daily ceiling comes from the environment, with a safe default", () => {
+  assert.equal(dailyCredits(undefined), DEFAULT_DAILY_CREDITS);
+  assert.equal(dailyCredits(""), DEFAULT_DAILY_CREDITS);
+  assert.equal(dailyCredits("lots"), DEFAULT_DAILY_CREDITS);
+  assert.equal(dailyCredits("-5"), DEFAULT_DAILY_CREDITS);
+  assert.equal(dailyCredits("12000"), 12000);
+  assert.equal(dailyCredits("0"), 0);
 });
