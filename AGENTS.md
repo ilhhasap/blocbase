@@ -51,6 +51,8 @@ Two groups: Blocks (small components) and Sections (whole 1440 x 800 screens: `S
 `src/components/live-misc.tsx`, `minW: 1440`). Paid blocks live in the Blocks category **Signature**: give a block
 `premium: { price, by? }`. Their cards wear the price and copying is locked ("Signature opens soon") until
 payments exist (`onCopy` in `src/components/site.tsx`); the preview stays open.
+Signature is on hold: its block is `status: "draft"` and the chip is dev only (`SIGNATURE` in `src/data/blocks.ts`), so nothing
+of it shows in production.
 
 ## Notes
 - Deployed to Vercel: no runtime filesystem writes, no hard-coded hosts or secrets.
