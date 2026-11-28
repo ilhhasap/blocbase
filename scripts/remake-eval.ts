@@ -13,7 +13,7 @@ import { extname, join, parse } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { creditsFor } from "../src/lib/mimic-credits.ts";
 import { expandIcons } from "../src/lib/mimic-icons.ts";
-import { loadLucide } from "../src/lib/mimic-lucide.ts";
+import { loadLogo, loadLucide } from "../src/lib/mimic-lucide.ts";
 import { hasPlaceholders, MIMIC_SCHEMA, MIMIC_SYSTEM } from "../src/lib/mimic-prompt.ts";
 
 const MIMES: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
@@ -73,7 +73,7 @@ for (const file of files) {
       note = parsed.note ?? "";
       if (hasPlaceholders(html)) note = `PLACEHOLDERS LEFT IN. ${note}`;
     }
-    html = await expandIcons(html, loadLucide);
+    html = await expandIcons(html, loadLucide, loadLogo);
   } catch (error) {
     html = "";
     note = `FAILED: ${error instanceof Error ? error.message : String(error)}`;
