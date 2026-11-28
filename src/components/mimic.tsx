@@ -19,6 +19,8 @@ import { mimicGenerate, mimicStatus } from "@/lib/mimic";
 import type { MimicStatus } from "@/lib/mimic.server";
 import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
+import { expandIcons } from "@/lib/mimic-icons";
+import { loadLucide } from "@/lib/mimic-lucide";
 import { describeFacts, dominantColors } from "@/lib/mimic-facts";
 import { loadShot, pruneShots, saveShot } from "@/lib/mimic-shots";
 import {
@@ -53,6 +55,8 @@ type Run = {
   working: boolean;
   /** True while a correction or an edit runs over an existing result. */
   refining?: boolean;
+  /** The automatic second pass is comparing the new block with the screenshot. */
+  checking?: boolean;
   error: string | null;
   /** What the person typed under the block, to change it. */
   instruction?: string;
@@ -68,6 +72,8 @@ type Flow = {
   thumb: string | null;
   hint: string;
   model?: string;
+  /** Compare each new block with the screenshot and fix it, without being asked. Costs a second run. */
+  check?: boolean;
   /** Set when the picture looks like a photo; a warning only, never saved. */
   photo?: boolean;
   /** Original size of the picture, e.g. "1080 × 1350"; not saved. */
@@ -322,6 +328,7 @@ function loadSaved(key: string): Saved {
           thumb?: unknown;
           hint?: unknown;
           model?: unknown;
+          check?: unknown;
           runs?: unknown;
         }>;
         pos?: Record<string, Partial<Point>>;
@@ -354,6 +361,7 @@ function loadSaved(key: string): Saved {
             thumb,
             hint: hint.slice(0, 200),
             model,
+            check: item.check === true,
             runs,
           });
         }
@@ -406,6 +414,7 @@ function trimmed(flows: Flow[], pos: Record<string, Point>) {
     thumb: string | null;
     hint: string;
     model?: string;
+    check?: boolean;
     runs: Array<{ id: string; result: Result }>;
   }> = [];
   const outPos: Record<string, Point> = {};
@@ -422,6 +431,7 @@ function trimmed(flows: Flow[], pos: Record<string, Point>) {
       thumb: flow.thumb,
       hint: flow.hint,
       model: flow.model,
+      check: flow.check,
       runs,
     });
     for (const id of [
@@ -1814,6 +1824,8 @@ function MimicTool({
 
   // ---- board changes ---------------------------------------------------------------------------
 
+  const dropped = useRef(new Set<string>());
+
   const patchFlow = useCallback((flowId: string, patch: Partial<Flow>) => {
     setFlows((old) =>
       old.map((flow) => (flow.id === flowId ? { ...flow, ...patch } : flow)),
@@ -1961,6 +1973,24 @@ function MimicTool({
     return () => window.removeEventListener("paste", onPaste);
   }, [addFlow]);
 
+  /** The block's size as it would be drawn, measured off screen (it may not be on the board yet). */
+  async function drawn(html: string): Promise<string | undefined> {
+    const holder = document.createElement("div");
+    holder.setAttribute(
+      "style",
+      "position:fixed;left:-20000px;top:0;width:max-content;visibility:hidden",
+    );
+    holder.innerHTML = html;
+    document.body.appendChild(holder);
+    const root = holder.firstElementChild as HTMLElement | null;
+    const width = root?.offsetWidth ?? 0;
+    const height = root?.offsetHeight ?? 0;
+    holder.remove();
+    if (!width || !height) return undefined;
+    const png = await renderBlockPng(html, width, height).catch(() => undefined);
+    return png && png.length <= 1_500_000 ? png : undefined;
+  }
+
   /**
    * One model call for a block. "build" is a new block from the screenshot; "refine" compares the block with
    * the screenshot; "edit" applies what was typed under the block (no screenshot needed).
@@ -2000,52 +2030,84 @@ function MimicTool({
           }
         }
       }
-      // Never wait forever: if nothing has come back after this long, say so instead of spinning.
-      let giveUp: number | undefined;
-      const out = await Promise.race([
-        mimicGenerate({
-          data: {
-            image: shot?.image,
-            mime: shot?.mime,
-            hint: flow.hint,
-            width: shot?.width,
-            height: shot?.height,
-            facts: mode === "build" ? shot?.facts : undefined,
-            model,
-            html,
-            render,
-            instruction: mode === "edit" ? run.instruction : undefined,
-          },
-        }),
-        new Promise<never>((_, reject) => {
-          giveUp = window.setTimeout(
-            () =>
-              reject(
-                new Error(
-                  "That took too long. Try a simpler crop, or a faster model like Sonnet.",
+      const request = async (
+        pass: "build" | "refine" | "edit",
+        current?: string,
+        picture?: string,
+      ) => {
+        // Never wait forever: if nothing has come back after this long, say so instead of spinning.
+        let giveUp: number | undefined;
+        const out = await Promise.race([
+          mimicGenerate({
+            data: {
+              image: shot?.image,
+              mime: shot?.mime,
+              hint: flow.hint,
+              width: shot?.width,
+              height: shot?.height,
+              facts: pass === "build" ? shot?.facts : undefined,
+              model,
+              html: current,
+              render: picture,
+              instruction: pass === "edit" ? run.instruction : undefined,
+            },
+          }),
+          new Promise<never>((_, reject) => {
+            giveUp = window.setTimeout(
+              () =>
+                reject(
+                  new Error(
+                    "That took too long. Try a simpler crop, or a faster model like Sonnet.",
+                  ),
                 ),
-              ),
-            240_000,
-          );
-        }),
-      ]).finally(() => window.clearTimeout(giveUp));
-      const next = sanitizeBlockHtml(out.html);
-      if (!next) throw new Error("The result could not be drawn. Try again.");
-      const id = `mimic-${uid()}`;
-      registerGenerated(id, next);
+              240_000,
+            );
+          }),
+        ]).finally(() => window.clearTimeout(giveUp));
+        const next = sanitizeBlockHtml(await expandIcons(out.html, loadLucide));
+        if (!next) throw new Error("The result could not be drawn. Try again.");
+        const id = `mimic-${uid()}`;
+        registerGenerated(id, next);
+        setStatus((old) =>
+          old ? { ...old, used: out.used, limit: out.limit } : old,
+        );
+        return { id, name: out.name, html: next, note: out.note, model };
+      };
+
+      const first = await request(mode, html, render);
+      const check = mode === "build" && Boolean(flow.check);
+      patchRun(flow.id, run.id, {
+        working: check,
+        refining: check,
+        checking: check,
+        instruction: mode === "edit" ? "" : run.instruction,
+        result: first,
+      });
+      if (!check) return;
+      // The second pass only improves on a block that is already there, so its failure keeps the first.
+      let better = first;
+      if (!dropped.current.has(run.id)) {
+        try {
+          better = await request("refine", first.html, await drawn(first.html));
+        } catch (failure) {
+          const why = failure instanceof Error ? failure.message : "";
+          better = {
+            ...first,
+            note: `The automatic check did not run. ${why}`.trim().slice(0, 240),
+          };
+        }
+      }
       patchRun(flow.id, run.id, {
         working: false,
         refining: false,
-        instruction: mode === "edit" ? "" : run.instruction,
-        result: { id, name: out.name, html: next, note: out.note, model },
+        checking: false,
+        result: better,
       });
-      setStatus((old) =>
-        old ? { ...old, used: out.used, limit: out.limit } : old,
-      );
     } catch (failure) {
       patchRun(flow.id, run.id, {
         working: false,
         refining: false,
+        checking: false,
         error:
           failure instanceof Error && failure.message
             ? failure.message
@@ -2102,6 +2164,13 @@ function MimicTool({
   /** Remove whole rows (image node) or single blocks (block node). */
   function removeNodes(ids: string[]) {
     const gone = new Set(ids);
+    // A removed block must not go on to spend credits on its automatic check.
+    for (const flow of flows) {
+      for (const run of flow.runs) {
+        if (gone.has(`img-${flow.id}`) || gone.has(`out-${run.id}`))
+          dropped.current.add(run.id);
+      }
+    }
     // The picture and its shrunk copy stay in memory so that undo can bring the row back whole.
     setFlows((old) =>
       old.flatMap((flow) =>
@@ -2342,6 +2411,17 @@ function MimicTool({
                             status?.providers?.[item.provider] === false
                           }
                         />
+                        <button
+                          type="button"
+                          className="mimic-check"
+                          aria-pressed={flow.check ? "true" : "false"}
+                          title="After cloning, compare with the screenshot and fix the differences. Uses about twice the credits."
+                          onClick={() =>
+                            patchFlow(flow.id, { check: !flow.check })
+                          }
+                        >
+                          Auto-check
+                        </button>
                       </div>
                       <form
                         className="mimic-float mimic-prompt"
@@ -2459,6 +2539,11 @@ function MimicTool({
                             </button>
                           </article>
                           <div className="mimic-node mimic-edit">
+                            {run.checking ? (
+                              <p className="mimic-why" role="status">
+                                Checking it against the screenshot…
+                              </p>
+                            ) : null}
                             <form
                               onSubmit={(event) => {
                                 event.preventDefault();
