@@ -20,7 +20,7 @@ import type { MimicStatus } from "@/lib/mimic.server";
 import { CodeMenu } from "@/components/code-menu";
 import { sanitizeBlockHtml } from "@/lib/mimic-html";
 import { expandIcons } from "@/lib/mimic-icons";
-import { loadLucide } from "@/lib/mimic-lucide";
+import { loadLogo, loadLucide } from "@/lib/mimic-lucide";
 import { describeFacts, dominantColors } from "@/lib/mimic-facts";
 import { loadShot, pruneShots, saveShot } from "@/lib/mimic-shots";
 import {
@@ -2064,7 +2064,7 @@ function MimicTool({
             );
           }),
         ]).finally(() => window.clearTimeout(giveUp));
-        const next = sanitizeBlockHtml(await expandIcons(out.html, loadLucide));
+        const next = sanitizeBlockHtml(await expandIcons(out.html, loadLucide, loadLogo));
         if (!next) throw new Error("The result could not be drawn. Try again.");
         const id = `mimic-${uid()}`;
         registerGenerated(id, next);
