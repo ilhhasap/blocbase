@@ -63,7 +63,7 @@ function pack(items: Block[], n: number) {
     let at = 0;
     for (let i = 1; i < n; i++) if (heights[i]! < heights[at]!) at = i;
     cols[at]!.push(item);
-    heights[at] += item.h + 12;
+    heights[at] += Math.max(item.h, 300) + 12;
   }
   return cols;
 }

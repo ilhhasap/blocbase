@@ -5572,3 +5572,17 @@ body {
 .mimic-check[aria-pressed="true"]::before {
   background: #1f9d55;
 }
+
+/* Masonry (Pinterest) cards are never shorter than 300px; short blocks sit in the middle. */
+.wall[data-layout="masonry"] .card,
+.wall[data-layout="masonry"] .stage {
+  min-height: max(var(--h), 300px);
+}
+
+/* Library hero on wide screens: 150px from the navbar to the title, 180px from the hero's button to the filters. */
+@media (min-width: 761px) {
+  .hero:not(.hero-saved):not(.free-hero) {
+    padding-top: 102px;
+    padding-bottom: 180px;
+  }
+}
