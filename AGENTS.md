@@ -39,6 +39,10 @@ plan's maximum duration (a rebuild takes tens of seconds), and the client keeps 
 Vercel's 4.5 MB request limit, so keep those two numbers in `src/components/mimic.tsx` and `mimic.server.ts` in step.
 Locally `MIMIC_MOCK=true` returns a stand-in block without calling the model. The model's HTML is rebuilt from an
 allow-list in `src/lib/mimic-html.ts` before it is drawn.
+Remake icons: the model names a Lucide icon (`<svg data-icon="search">`) and `src/lib/mimic-icons.ts` puts the real
+drawing in; brand logos are still drawn by the model. "Auto-check" on the image node runs a second pass that compares
+the block with the screenshot (about twice the credits). `npm run remake:eval -- <label>` runs the prompt over the
+screenshots in `.qc/remake/shots/` into a side-by-side report (real, paid model calls; `--dry` makes none).
 Protect server functions with `authMiddleware` (`src/lib/auth/middleware.ts`).
 
 ## Blocks

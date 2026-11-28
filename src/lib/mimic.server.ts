@@ -122,6 +122,7 @@ export async function getMimicStatus(userId: string): Promise<MimicStatus> {
 }
 
 const SAMPLE = `<div class="kit" data-layer="Sample card" style="display:flex;flex-direction:column;gap:12px;padding:24px;width:320px;background:#ffffff;border-radius:20px;border:1px solid #e6e5e2;box-shadow:0 12px 32px rgba(23,24,26,0.08);">
+<svg data-icon="sparkles" width="20" height="20" color="#17181a"></svg>
 <div data-layer="Title" style="font-family:Geist, sans-serif;font-size:18px;font-weight:600;line-height:24px;color:#17181a;">Mock result</div>
 <div data-layer="Body" style="font-family:Geist, sans-serif;font-size:14px;font-weight:400;line-height:20px;color:#6f6e68;">MIMIC_MOCK is on, so this card is a stand-in and no model was called.</div>
 <div data-layer="Primary button" style="display:flex;align-items:center;justify-content:center;height:40px;padding:0px 18px;border-radius:999px;background:#17181a;align-self:flex-start;"><span style="font-family:Geist, sans-serif;font-size:14px;font-weight:500;line-height:20px;color:#ffffff;">Continue</span></div>
